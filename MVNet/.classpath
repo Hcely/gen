@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.7.0_80"/>
+	<classpathentry kind="lib" path="/V/lib/v-binary3.jar"/>
+	<classpathentry kind="lib" path="/V/lib/v-common.jar" sourcepath="/V"/>
+	<classpathentry kind="lib" path="/WProj/lib/netty-ws.4.0.33.change.jar" sourcepath="/WProj/lib/netty-all-4.0.33.Final-sources.jar"/>
+	<classpathentry kind="lib" path="/WProj/lib/w-common.jar" sourcepath="/WProj"/>
+	<classpathentry kind="lib" path="/V/lib/v-plugin-core.jar" sourcepath="/V"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
