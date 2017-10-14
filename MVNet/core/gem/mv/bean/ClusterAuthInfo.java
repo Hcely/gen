@@ -1,4 +1,4 @@
-package gem.mv.cluster.bean;
+package gem.mv.bean;
 
 import w.unit.WeaveAuthInfo;
 

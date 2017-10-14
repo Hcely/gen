@@ -7,8 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import gem.mv.bean.ClusterConfig;
 import gem.mv.cluster.ClusterConnMgrPlugin;
-import gem.mv.cluster.bean.ClusterConfig;
 import v.common.helper.ParseUtil;
 import v.common.helper.ReflectUtil;
 import v.common.unit.DefEnumeration;
@@ -57,12 +57,16 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 
 	@Override
 	protected void _init0() {
+		for (MVPlugin p : plugins)
+			p.onCreate(this);
+
 		scanPluginBuilderRes();
 		resourceMgr.init();
-		injectPlugin();
 		for (MVPlugin p : plugins)
-			p.onInit(this);
-		initW();
+			p.onInit();
+		initWeave();
+		
+		injectPlugin();
 		for (MVPlugin p : plugins)
 			p.onStart();
 	}
@@ -90,7 +94,7 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 		}
 	}
 
-	private final void initW() {
+	private final void initWeave() {
 		if (wbuilder.hasBindPorts()) {
 			wbuilder.setAcceptor(new NettyAcceptor());
 			wbuilder.setBindHost("0.0.0.0");
@@ -98,7 +102,6 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 		wbuilder.setConnector(new NettyConnector());
 		wbuilder.setErrorHandler(errorHandler);
 		weave = wbuilder.buildAndOpen();
-		connMgr.setWeave(weave);
 	}
 
 	@Override

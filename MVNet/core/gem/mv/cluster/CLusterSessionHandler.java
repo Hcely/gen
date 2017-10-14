@@ -1,6 +1,6 @@
 package gem.mv.cluster;
 
-import gem.mv.cluster.bean.ClusterAuthInfo;
+import gem.mv.bean.ClusterAuthInfo;
 import v.common.util.IntHashMap;
 import w.Wession;
 import w.buf.RefBuf;

@@ -2,7 +2,7 @@ package gem.mv.cluster;
 
 import java.net.InetSocketAddress;
 
-import gem.mv.cluster.bean.ClusterAuthInfo;
+import gem.mv.bean.ClusterAuthInfo;
 import gem.mv.util.IpRule;
 import v.common.coder.Md5Coder;
 import w.Wession;

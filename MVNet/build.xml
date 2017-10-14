@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. -->
+<project basedir="." default="build" name="MVNet">
+	<property environment="env" />
+	<property name="V.location" value="D:/wv_proj/V" />
+	<property name="WProj.location" value="D:/wv_proj/WProj" />
+	<property name="ECLIPSE_HOME" value="D:/eclipseNeon/" />
+	<property name="debuglevel" value="source,lines,vars" />
+	<property name="target" value="1.7" />
+	<property name="source" value="1.7" />
+	<path id="MVNet.classpath">
+		<pathelement location="bin" />
+		<pathelement location="${V.location}/lib/v-binary3.jar" />
+		<pathelement location="${V.location}/lib/v-common.jar" />
+		<pathelement location="${WProj.location}/lib/netty-ws.4.0.33.change.jar" />
+		<pathelement location="${WProj.location}/lib/w-common.jar" />
+		<pathelement location="${V.location}/lib/v-plugin-core.jar" />
+	</path>
+
+	<target name="build" />
+	<target name="makejar">
+		<delete dir="ant" />
+		<mkdir dir="ant" />
+		<javac destdir="ant" includeantruntime="false" source="${source}" target="${target}">
+			<src path="core" />
+			<compilerarg line="-XDignore.symbol.file" />
+			<classpath refid="MVNet.classpath" />
+		</javac>
+		<jar jarfile="lib/mv-common.jar" basedir="ant" />
+	</target>
+</project>

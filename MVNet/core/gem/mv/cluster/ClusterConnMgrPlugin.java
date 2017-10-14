@@ -3,8 +3,8 @@ package gem.mv.cluster;
 import gem.mv.MVFrameworkBuilder;
 import gem.mv.MVFrameworkContext;
 import gem.mv.MVPlugin;
-import gem.mv.cluster.bean.ClusterAuthInfo;
-import gem.mv.cluster.bean.ClusterConfig;
+import gem.mv.bean.ClusterAuthInfo;
+import gem.mv.bean.ClusterConfig;
 import v.binary3.Binary3CoderMgr;
 import v.common.helper.StrUtil;
 import v.common.util.IntHashMap;
@@ -16,6 +16,7 @@ import w.Wession;
 import w.WessionSet;
 import w.WessionSetConfig;
 import w.buf.RefBuf;
+import w.handler.WeavePingPongHandler;
 import w.unit.WeavePromise;
 import w.unit.WeaveRequest;
 
@@ -27,6 +28,7 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 	protected MVFrameworkContext context;
 	protected WeaveFramework weave;
 
+	protected WeavePingPongHandler pingpongHandler;
 	@VResource
 	protected ClusterConfig config;
 	protected String acceptWsUrl;
@@ -39,9 +41,17 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 		this.handlers = new SimpleQueue<>();
 	}
 
+	public final void setPingpongHandler(WeavePingPongHandler pingpongHandler) {
+		this.pingpongHandler = pingpongHandler;
+	}
+
 	@Override
-	public void onInit(MVFrameworkContext context) {
+	public final void onCreate(MVFrameworkContext context) {
 		this.context = context;
+	}
+
+	@Override
+	public final void onInit() {
 		int port = config.getAcceptPort();
 		String uri = config.getAcceptUri();
 
@@ -55,7 +65,9 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 			acceptWsUrl = getAcceptWsUrl(config.getAcceptHost(), port, uri);
 			setConfig = context.createSetConfig(port);
 		}
+		setConfig.setPingPongHandler(pingpongHandler);
 		setConfig.setPing(2000, 10000);
+
 		setConfig.setAuthHandler(
 				new CLusterAuthHandler(serverId, config.getSecretKey(), acceptWsUrl, uri, port, config.getIpRule()));
 		setConfig.setSessionHandler(new CLusterSessionHandler(this));
@@ -63,11 +75,7 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 	}
 
 	@Override
-	public void onStart() {
-	}
-
-	@Override
-	public void onDestory() {
+	public final void onDestory() {
 		sessionMap.clear();
 	}
 
@@ -94,11 +102,11 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 		return sessionMap.get(serverId);
 	}
 
-	public String getAcceptWsUrl() {
+	public final String getAcceptWsUrl() {
 		return acceptWsUrl;
 	}
 
-	public boolean send(int targetServerId, Object obj) {
+	public final boolean send(int targetServerId, Object obj) {
 		if (targetServerId == this.serverId) {
 			onMsg(obj);
 			return true;
@@ -110,12 +118,12 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 		return true;
 	}
 
-	public void send(Wession session, Object obj) {
+	public final void send(Wession session, Object obj) {
 		int serverId = ((ClusterAuthInfo) session.info()).serverId();
 		send(serverId, session, obj);
 	}
 
-	private void send(int targetServerId, Wession session, Object obj) {
+	private final void send(int targetServerId, Wession session, Object obj) {
 		RefBuf buf = session.allocate(1024);
 		buf.writeInt(targetServerId);
 		coderMgr.encode(obj, buf);

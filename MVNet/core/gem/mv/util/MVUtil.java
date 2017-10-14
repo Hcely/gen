@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +16,13 @@ import v.common.io.BytesOutputStream;
 import v.server.helper.NetUtil;
 
 public class MVUtil {
+	public static final Map<String, String> parseParams(String[] args) {
+		Map<String, String> map = new LinkedHashMap<>();
+		for (String e : args)
+			parseContent(e, map);
+		return map;
+	}
+
 	public static final void loadProperties(File file, Map<String, String> properties) throws IOException {
 		loadProperties(new FileInputStream(file), properties);
 	}
