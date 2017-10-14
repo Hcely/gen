@@ -1,13 +1,15 @@
-package gem.mv.plugin.cluster.bean;
+package gem.mv.cluster.bean;
 
 import w.unit.WeaveAuthInfo;
 
-public class ClusterAuthInfo implements WeaveAuthInfo {
+public final class ClusterAuthInfo implements WeaveAuthInfo {
 	protected final int serverId;
+	protected final long createTime;
 	protected final Integer id;
 
 	public ClusterAuthInfo(int serverId) {
 		this.serverId = serverId;
+		this.createTime = System.currentTimeMillis();
 		this.id = serverId;
 	}
 
@@ -19,6 +21,10 @@ public class ClusterAuthInfo implements WeaveAuthInfo {
 	@Override
 	public int hash() {
 		return serverId;
+	}
+
+	public long createTime() {
+		return createTime;
 	}
 
 	public int serverId() {

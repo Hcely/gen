@@ -1,10 +1,12 @@
 package gem.mv;
 
-import gem.mv.plugin.cluster.ClusterConnMgrPlugin;
+import gem.mv.cluster.ClusterConnMgrPlugin;
 import v.plugin.VPFrameworkContext;
 import w.WessionSetConfig;
 
 public interface MVFrameworkContext extends VPFrameworkContext {
+	public int getServerId();
+
 	public WessionSetConfig createSetConfig();
 
 	public WessionSetConfig createSetConfig(int... ports);

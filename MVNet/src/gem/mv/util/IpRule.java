@@ -1,5 +1,6 @@
 package gem.mv.util;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -30,6 +31,14 @@ public final class IpRule {
 
 	public void addBlackIp(String ip) {
 		blackList.add(ip);
+	}
+
+	public void addWhileIps(Collection<String> ips) {
+		whiteList.addAll(ips);
+	}
+
+	public void addBlackIps(Collection<String> ips) {
+		blackList.addAll(ips);
 	}
 
 	public boolean allow(String ip) {
