@@ -9,7 +9,6 @@ import gem.mv.bean.ClusterAuthInfo;
 import gem.mv.util.IpRule;
 import gem.mv.util.MVUtil;
 import v.binary3.Binary3CoderMgr;
-import v.common.helper.StrUtil;
 import v.common.util.IntHashMap;
 import v.common.util.SimpleQueue;
 import v.server.helper.NetUtil;
@@ -74,7 +73,7 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 		this.secretKey = context.getProperty(KEY_SECRET_KEY, DEF_SECRET_KEY);
 		this.acceptHost = context.getProperty(KEY_ACCEPT_HOST, DEF_ACCEPT_HOST);
 		this.acceptPort = context.getProperty(KEY_ACCEPT_PORT, Integer.class, -1);
-		this.acceptUri = getAcceptUri(context.getProperty(KEY_ACCEPT_URI, DEF_ACCEPT_URI));
+		this.acceptUri = MVUtil.getUri(context.getProperty(KEY_ACCEPT_URI, DEF_ACCEPT_URI));
 
 		if (serverId <= MVFramework.MAX_SERVER_ID) {
 			List<String> ipRules = context.getProperty(KEY_IP_RULES, List.class, null);
@@ -85,7 +84,7 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 			rule.addBlackIps(blackList);
 			if (acceptPort < 0)
 				acceptPort = NetUtil.getEnablePort();
-			acceptWsUrl = getAcceptWsUrl(acceptHost, acceptPort, acceptUri);
+			acceptWsUrl = MVUtil.getWsUrl(acceptHost, acceptPort, acceptUri);
 			MVUtil.log.info("server wsUrl:" + acceptWsUrl);
 		}
 	}
@@ -170,23 +169,5 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 		for (ClusterMsgHandler handler : handlers)
 			if (handler.onClusterMsg(fromServerId, obj))
 				break;
-	}
-
-	private static final String getAcceptUri(String uri) {
-		if (uri.startsWith("/"))
-			return uri;
-		StringBuilder sb = new StringBuilder(uri.length() + 1);
-		sb.append('/').append(uri);
-		return StrUtil.sbToString(sb);
-	}
-
-	private static final String getAcceptWsUrl(String host, int port, String uri) {
-		if (NetUtil.INSIDE_HOST.equalsIgnoreCase(host))
-			host = NetUtil.getInsideAddr().getHostAddress();
-		else if (NetUtil.OUTSIDE_HOST.equalsIgnoreCase(host))
-			host = NetUtil.getOutsideAddr().getHostAddress();
-		StringBuilder sb = new StringBuilder(128);
-		sb.append("ws://").append(host).append(':').append(port).append(uri);
-		return sb.toString();
 	}
 }

@@ -1,6 +1,5 @@
 package gem.mv;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -16,7 +15,6 @@ import v.common.helper.StrUtil;
 import v.common.unit.DefEnumeration;
 import v.common.unit.VSimpleStatusObject;
 import v.plugin.VPlugin;
-import v.plugin.annotation.VPluginBean;
 import v.resource.HatchFactoryResourceMgr;
 import v.resource.VResourceMgr;
 import w.DefWeaveBuilder;
@@ -62,7 +60,6 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 		for (MVPlugin p : plugins)
 			resourceMgr.addCellObj(p);
 		resourceMgr.init();
-		injectPlugin();
 
 		for (MVPlugin p : plugins)
 			p.onInit();
@@ -70,24 +67,6 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 		initFramework();
 		for (MVPlugin p : plugins)
 			p.onStart();
-	}
-
-	private final void injectPlugin() {
-		for (MVPlugin p : plugins) {
-			List<Field> fields = ReflectUtil.getAllFields(p.getClass());
-			for (Field f : fields) {
-				if (ReflectUtil.isFinal(f))
-					continue;
-				Class clz = f.getType();
-				if (clz == MVPlugin.class || !MVPlugin.class.isAssignableFrom(clz))
-					continue;
-				if (f.getAnnotation(VPluginBean.class) == null)
-					continue;
-				List ps = getPlugins(clz);
-				if (ps.size() == 1)
-					ReflectUtil.set(f, p, ps.get(0));
-			}
-		}
 	}
 
 	private final void initFramework() {
@@ -104,7 +83,7 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 	protected void _destory0() {
 		for (MVPlugin p : plugins)
 			p.onDestory();
-		
+
 		plugins.clear();
 		properties.clear();
 		resourceMgr.destory();

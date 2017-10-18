@@ -118,4 +118,30 @@ public class MVUtil {
 		}
 		return sb.toString();
 	}
+
+	public static final String getUri(String uri) {
+		int len = uri.length();
+		if (uri.charAt(0) == '/' && uri.charAt(len - 1) != '/')
+			return uri;
+		StringBuilder sb = new StringBuilder(len + 1);
+		if (uri.charAt(0) != '/')
+			sb.append('/');
+		sb.append(uri);
+		if (uri.charAt(len - 1) == '/')
+			sb.setLength(sb.length() - 1);
+		return StrUtil.sbToString(sb);
+	}
+
+	public static final String getWsUrl(String host, int port, String uri) {
+		if (NetUtil.INSIDE_HOST.equalsIgnoreCase(host))
+			host = NetUtil.getInsideAddr().getHostAddress();
+		else if (NetUtil.OUTSIDE_HOST.equalsIgnoreCase(host))
+			host = NetUtil.getOutsideAddr().getHostAddress();
+		StringBuilder sb = new StringBuilder(128);
+		sb.append("ws://").append(host).append(':').append(port);
+		if (uri.charAt(0) != '/')
+			sb.append('/');
+		sb.append(uri);
+		return sb.toString();
+	}
 }
