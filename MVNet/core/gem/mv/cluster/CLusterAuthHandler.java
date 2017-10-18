@@ -72,12 +72,12 @@ class CLusterAuthHandler implements WeaveAuthHandler {
 		return false;
 	}
 
-	static final String getSign(String wsUrl, int fromServerId, int toServerId, String secretKey, long timestamp) {
+	static final String getSign(String wsUrl, int fromServerId, int targetServerId, String secretKey, long timestamp) {
 		StringBuilder sb = new StringBuilder(256);
 		sb.append("fromServerId=").append(fromServerId);
 		sb.append("secretKey=").append(secretKey);
 		sb.append("timestamp=").append(timestamp);
-		sb.append("toServerId=").append(toServerId);
+		sb.append("targetServerId=").append(targetServerId);
 		sb.append("wsUrl=").append(wsUrl);
 		return Md5Coder.md5Str(sb.toString());
 	}

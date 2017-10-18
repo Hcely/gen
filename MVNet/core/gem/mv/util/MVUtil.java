@@ -6,8 +6,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.type.CollectionType;
+import com.fasterxml.jackson.databind.type.MapType;
 
 import v.VContext;
 import v.common.helper.IOHelper;
@@ -16,6 +27,46 @@ import v.common.io.BytesOutputStream;
 import v.server.helper.NetUtil;
 
 public class MVUtil {
+	public static final Logger log = LogManager.getLogger(MVUtil.class);
+
+	public static final ObjectMapper jsonMapper = new ObjectMapper().setSerializationInclusion(Include.NON_NULL)
+			.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+			.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
+
+	public static final String objToJson(final Object obj) {
+		try {
+			return jsonMapper.writeValueAsString(obj);
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	public static final <T> T jsonToObj(final String json, final Class<? extends T> clazz) {
+		try {
+			return jsonMapper.readValue(json, clazz);
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	public static final <T> List<T> jsonToList(final String json, final Class<? extends T> clazz) {
+		CollectionType type = jsonMapper.getTypeFactory().constructCollectionType(LinkedList.class, clazz);
+		try {
+			return jsonMapper.readValue(json, type);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	public static final <T> Map<String, T> jsonToMap(final String json, final Class<? extends T> clazz) {
+		MapType type = jsonMapper.getTypeFactory().constructMapType(LinkedHashMap.class, String.class, clazz);
+		try {
+			return jsonMapper.readValue(json, type);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
 	public static final Map<String, String> parseParams(String[] args) {
 		Map<String, String> map = new LinkedHashMap<>();
 		for (String e : args)

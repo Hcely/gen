@@ -1,16 +1,18 @@
 package gem.mv;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.Enumeration;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import gem.mv.bean.ClusterConfig;
 import gem.mv.cluster.ClusterConnMgrPlugin;
 import v.common.helper.ParseUtil;
 import v.common.helper.ReflectUtil;
+import v.common.helper.StrUtil;
 import v.common.unit.DefEnumeration;
 import v.common.unit.VSimpleStatusObject;
 import v.plugin.VPlugin;
@@ -32,7 +34,6 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 	protected final WeaveErrorHandler errorHandler;
 	protected final List<MVPlugin> plugins;
 	protected final HatchFactoryResourceMgr resourceMgr;
-
 	protected final WeaveBuilder wbuilder;
 	protected final DefClusterConnMgrPlugin connMgr;
 	protected byte idx;
@@ -50,9 +51,7 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 		this.wbuilder = DefWeaveBuilder.create();
 		this.connMgr = new DefClusterConnMgrPlugin(serverId);
 		this.idx = 0;
-
 		plugins.add(0, connMgr);
-		resourceMgr.addCellClass(ClusterConfig.PROPERTIES_PACKAGE, ClusterConfig.class);
 	}
 
 	@Override
@@ -60,20 +59,17 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 		for (MVPlugin p : plugins)
 			p.onCreate(this);
 
-		scanPluginBuilderRes();
-		resourceMgr.init();
-		for (MVPlugin p : plugins)
-			p.onInit();
-		initWeave();
-		
-		injectPlugin();
-		for (MVPlugin p : plugins)
-			p.onStart();
-	}
-
-	private final void scanPluginBuilderRes() {
 		for (MVPlugin p : plugins)
 			resourceMgr.addCellObj(p);
+		resourceMgr.init();
+		injectPlugin();
+
+		for (MVPlugin p : plugins)
+			p.onInit();
+
+		initFramework();
+		for (MVPlugin p : plugins)
+			p.onStart();
 	}
 
 	private final void injectPlugin() {
@@ -94,7 +90,7 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 		}
 	}
 
-	private final void initWeave() {
+	private final void initFramework() {
 		if (wbuilder.hasBindPorts()) {
 			wbuilder.setAcceptor(new NettyAcceptor());
 			wbuilder.setBindHost("0.0.0.0");
@@ -108,6 +104,10 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 	protected void _destory0() {
 		for (MVPlugin p : plugins)
 			p.onDestory();
+		
+		plugins.clear();
+		properties.clear();
+		resourceMgr.destory();
 	}
 
 	@Override
@@ -123,12 +123,28 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 
 	@Override
 	public <T> T getProperty(String key, Class<T> clazz, T nullback) {
-		return ParseUtil.parse(properties.get(key), clazz, nullback);
+		String value = properties.get(key);
+		if (value == null)
+			return nullback;
+		if (Collection.class.isAssignableFrom(clazz)) {
+			Collection<String> hr;
+			if (clazz.isInterface() || ReflectUtil.isAbstract(clazz)) {
+				if (Set.class.isAssignableFrom(clazz))
+					hr = new HashSet<>();
+				else
+					hr = new LinkedList<>();
+			} else
+				hr = (Collection<String>) ReflectUtil.newObj(clazz);
+
+			hr.addAll(StrUtil.spiltAsList(value, ','));
+			return (T) hr;
+		}
+		return ParseUtil.parse(value, clazz, nullback);
 	}
 
 	@Override
 	public Map<String, String> getProperties() {
-		return new LinkedHashMap<>(properties);
+		return properties;
 	}
 
 	@Override
@@ -167,6 +183,31 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 	@Override
 	public VResourceMgr getResourceMgr() {
 		return resourceMgr;
+	}
+
+	@Override
+	public <T> T propertiesParse(String name, Class<T> clz) {
+		return resourceMgr.getPropertyMapper().parse(properties, name, clz);
+	}
+
+	@Override
+	public void setProperties(Object obj, String name) {
+		resourceMgr.getPropertyMapper().setProperties(obj, properties, name);
+	}
+
+	@Override
+	public <T> List<T> propertiesParseList(String name, Class<T> clz) {
+		return resourceMgr.getPropertyMapper().parseList(properties, name, clz);
+	}
+
+	@Override
+	public <T> Set<T> propertiesParseSet(String name, Class<T> clz) {
+		return resourceMgr.getPropertyMapper().parseSet(properties, name, clz);
+	}
+
+	@Override
+	public <T> Map<String, T> propertiesParseMap(String name, Class<T> clz) {
+		return resourceMgr.getPropertyMapper().parseMap(properties, name, clz);
 	}
 
 	@Override

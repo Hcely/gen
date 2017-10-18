@@ -1,7 +1,9 @@
 package gem.mv.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -12,16 +14,23 @@ public final class IpRule {
 	protected final Set<String> blackList;
 	protected final Pattern[] ipRules;
 
-	public IpRule(String... ipRules) {
+	public IpRule(Collection<String> ipRules) {
 		this.whiteList = new HashSet<>();
 		this.blackList = new HashSet<>();
-		if (ipRules == null || ipRules.length == 0)
+
+		if (ipRules == null || ipRules.size() == 0)
 			this.ipRules = null;
 		else {
-			final int len = ipRules.length;
-			this.ipRules = new Pattern[len];
-			for (int i = 0; i < len; ++i)
-				this.ipRules[i] = buildRule(ipRules[i]);
+			List<Pattern> list = new ArrayList<>();
+			for (String e : ipRules)
+				if (containsStar(e))
+					list.add(buildRule(e));
+				else
+					whiteList.add(e);
+			if (list.isEmpty())
+				this.ipRules = null;
+			else
+				this.ipRules = list.toArray(new Pattern[list.size()]);
 		}
 	}
 
@@ -34,14 +43,20 @@ public final class IpRule {
 	}
 
 	public void addWhileIps(Collection<String> ips) {
-		whiteList.addAll(ips);
+		if (ips != null)
+			whiteList.addAll(ips);
 	}
 
 	public void addBlackIps(Collection<String> ips) {
-		blackList.addAll(ips);
+		if (ips != null)
+			blackList.addAll(ips);
 	}
 
 	public boolean allow(String ip) {
+		if (whiteList.size() > 0 && whiteList.contains(ip))
+			return true;
+		if (blackList.size() > 0 && blackList.contains(ip))
+			return false;
 		if (ipRules != null) {
 			boolean b = true;
 			for (Pattern r : ipRules)
@@ -52,11 +67,11 @@ public final class IpRule {
 			if (b)
 				return false;
 		}
-		if (whiteList.size() > 0 && whiteList.contains(ip))
-			return true;
-		if (blackList.size() > 0 && blackList.contains(ip))
-			return false;
 		return true;
+	}
+
+	private static final boolean containsStar(String rule) {
+		return rule.indexOf('*') > 0;
 	}
 
 	private static final Pattern buildRule(String rule) {

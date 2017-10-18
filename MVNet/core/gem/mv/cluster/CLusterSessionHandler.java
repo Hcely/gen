@@ -1,6 +1,9 @@
 package gem.mv.cluster;
 
+import java.net.InetSocketAddress;
+
 import gem.mv.bean.ClusterAuthInfo;
+import gem.mv.util.MVUtil;
 import v.common.util.IntHashMap;
 import w.Wession;
 import w.buf.RefBuf;
@@ -19,15 +22,19 @@ class CLusterSessionHandler implements WeaveSessionHandler {
 
 	@Override
 	public void onOpen(Wession session, boolean hasConflict) throws Throwable {
-		int serverId = ((ClusterAuthInfo) session.info()).serverId();
+		ClusterAuthInfo info = (ClusterAuthInfo) session.info();
 		synchronized (this) {
-			sessionMap.put(serverId, session);
+			sessionMap.put(info.serverId(), session);
 		}
+		StringBuilder sb = new StringBuilder(32);
+		InetSocketAddress addr = session.remoteAddress();
+		sb.append("server:").append(info.serverId()).append('(').append(addr.getAddress().getHostAddress()).append(':')
+				.append(addr.getPort()).append(") connection");
+		MVUtil.log.info(sb.toString());
 	}
 
 	@Override
 	public void onTextMsg(Wession session, String text) throws Throwable {
-
 	}
 
 	@Override
@@ -41,7 +48,7 @@ class CLusterSessionHandler implements WeaveSessionHandler {
 				target.sendBinary(buf);
 			}
 		} else
-			mgr.onMsgBuf(buf);
+			mgr.handleMsgBuf(buf);
 	}
 
 	@Override
@@ -50,6 +57,12 @@ class CLusterSessionHandler implements WeaveSessionHandler {
 
 	@Override
 	public void onDisconn(Wession session, boolean isClose) throws Throwable {
+		ClusterAuthInfo info = (ClusterAuthInfo) session.info();
+		StringBuilder sb = new StringBuilder(32);
+		InetSocketAddress addr = session.remoteAddress();
+		sb.append("server:").append(info.serverId()).append('(').append(addr.getAddress().getHostAddress()).append(':')
+				.append(addr.getPort()).append(") disconn");
+		MVUtil.log.info(sb.toString());
 	}
 
 	@Override

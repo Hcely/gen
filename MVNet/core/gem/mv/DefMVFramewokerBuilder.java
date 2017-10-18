@@ -38,6 +38,12 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 	}
 
 	@Override
+	public void addPlugin(Class<? extends MVPlugin> pluginClz) {
+		if (!pluginMap.containsKey(pluginClz))
+			pluginMap.put(pluginClz, ReflectUtil.newObj(pluginClz));
+	}
+
+	@Override
 	public void addPlugin(MVPlugin plugin) {
 		pluginMap.put(plugin.getClass(), plugin);
 	}
@@ -74,6 +80,12 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 		properties.put(key, value);
 	}
 
+	@Override
+	public void setProperty(Map<String, String> props) {
+		for (Entry<String, String> e : props.entrySet())
+			setProperty(e.getKey(), e.getValue());
+	}
+
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void setProperty(String key, Object value) {
@@ -83,7 +95,10 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 			Map<?, ?> map = (Map<?, ?>) value;
 			for (Entry e : map.entrySet()) {
 				String k0 = e.getKey().toString();
-				setProperty(key + '.' + k0, e.getValue());
+				if (key == null)
+					setProperty(k0, e.getValue());
+				else
+					setProperty(key + '.' + k0, e.getValue());
 			}
 		} else
 			setProperty(key, value.toString());
