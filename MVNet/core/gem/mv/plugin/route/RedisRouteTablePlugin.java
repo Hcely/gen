@@ -18,6 +18,7 @@ import v.common.helper.StrUtil;
 import v.resource.annotation.VBuilderResource;
 
 public class RedisRouteTablePlugin implements RouteTablePlugin {
+	private static final long LOCK_TIME = 1000;
 	@VBuilderResource(value = RedisBuilder.class, propertisPackage = "mv.redis")
 	protected MRedis redis;
 	protected int serverId;
@@ -45,8 +46,9 @@ public class RedisRouteTablePlugin implements RouteTablePlugin {
 		final String key = route.getKey();
 		final String lockKey = getLockKey(key);
 		while (true) {
-			if (!redis.set(lockKey, String.valueOf(System.currentTimeMillis()), true, 2000))
-				LockSupport.parkNanos(1000000);
+			String lockValue = String.valueOf(System.currentTimeMillis());
+			if (!redis.set(lockKey, lockValue, true, LOCK_TIME))
+				LockSupport.parkNanos(5000000);
 			else
 				try {
 					Map<String, RouteInfo> map = parseRoutes(redis.get(key));
@@ -62,7 +64,7 @@ public class RedisRouteTablePlugin implements RouteTablePlugin {
 						return r;
 					}
 				} finally {
-					if (!redis.delete(lockKey))
+					if (!redis.delete(lockKey) && lockValue.equals(redis.get(lockKey)))
 						redis.delete(lockKey);
 				}
 		}
@@ -72,8 +74,9 @@ public class RedisRouteTablePlugin implements RouteTablePlugin {
 	public void remove(final String key, final String tag, final long time) {
 		final String lockKey = getLockKey(key);
 		while (true) {
-			if (!redis.set(lockKey, String.valueOf(System.currentTimeMillis()), true, 2000))
-				LockSupport.parkNanos(1000000);
+			String lockValue = String.valueOf(System.currentTimeMillis());
+			if (!redis.set(lockKey, lockValue, true, LOCK_TIME))
+				LockSupport.parkNanos(5000000);
 			else
 				try {
 					Map<String, RouteInfo> map = parseRoutes(redis.get(key));
@@ -86,7 +89,7 @@ public class RedisRouteTablePlugin implements RouteTablePlugin {
 						else
 							redis.set(key, MVUtil.objToJson(map));
 				} finally {
-					if (!redis.delete(lockKey))
+					if (!redis.delete(lockKey) && lockValue.equals(redis.get(lockKey)))
 						redis.delete(lockKey);
 				}
 		}
