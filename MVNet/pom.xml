@@ -3,14 +3,42 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>gen</groupId>
 	<artifactId>MVNet</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<properties>
 	</properties>
+	<repositories>
+		<repository>
+			<id>hcely</id>
+			<url>https://raw.githubusercontent.com/hcely/maven-repo/master/</url>
+		</repository>
+	</repositories>
 	<build>
 		<sourceDirectory>core</sourceDirectory>
 		<testSourceDirectory>test</testSourceDirectory>
 	</build>
 	<dependencies>
+		<dependency>
+			<groupId>wv</groupId>
+			<artifactId>v</artifactId>
+			<version>1.5.6</version>
+		</dependency>
+		<dependency>
+			<groupId>wv</groupId>
+			<artifactId>w</artifactId>
+			<version>1.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>wv</groupId>
+			<artifactId>binary3</artifactId>
+			<version>1.0.5</version>
+		</dependency>
+		<dependency>
+			<groupId>wv</groupId>
+			<artifactId>plugin-core</artifactId>
+			<version>1.0.2</version>
+		</dependency>
+
+
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-all</artifactId>
