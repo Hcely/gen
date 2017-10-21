@@ -112,6 +112,14 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 		return serverId;
 	}
 
+	public void addMsgHandler(ClusterMsgHandler handler) {
+		handlers.addLast(handler);
+	}
+
+	public void removeMsgHandler(ClusterMsgHandler handler) {
+		handlers.remove(handler);
+	}
+
 	public final WeavePromise<Wession> conn(int targetServerId, String wsUrl) {
 		if (targetServerId == serverId)
 			return null;

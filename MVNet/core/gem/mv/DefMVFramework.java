@@ -31,7 +31,9 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 	protected final Map<String, String> properties;
 	protected final WeaveErrorHandler errorHandler;
 	protected final List<MVPlugin> plugins;
+	protected final Set<Class<?>> resourceClzes;
 	protected final HatchFactoryResourceMgr resourceMgr;
+
 	protected final WeaveBuilder wbuilder;
 	protected final DefClusterConnMgrPlugin connMgr;
 	protected byte idx;
@@ -39,10 +41,11 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 	protected WeaveFramework weave;
 
 	DefMVFramework(int serverId, HatchFactoryResourceMgr resourceMgr, Map<String, String> properties,
-			List<MVPlugin> plugins, WeaveErrorHandler errorHandler) {
+			List<MVPlugin> plugins, Set<Class<?>> resourceClzes, WeaveErrorHandler errorHandler) {
 		this.serverId = serverId;
 		this.properties = properties;
 		this.plugins = plugins;
+		this.resourceClzes = resourceClzes;
 		this.errorHandler = errorHandler;
 		this.resourceMgr = resourceMgr;
 
@@ -56,9 +59,12 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 	protected void _init0() {
 		for (MVPlugin p : plugins)
 			p.onCreate(this);
-
+		for (Class<?> e : resourceClzes)
+			resourceMgr.addCellClass(e);
+		resourceClzes.clear();
 		for (MVPlugin p : plugins)
 			resourceMgr.addCellObj(p);
+
 		resourceMgr.init();
 
 		for (MVPlugin p : plugins)

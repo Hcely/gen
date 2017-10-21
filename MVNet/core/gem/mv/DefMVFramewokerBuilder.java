@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -26,12 +27,14 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 	protected final Map<String, String> properties;
 	protected final HatchFactoryResourceMgr resourceMgr;
 	protected final Map<Class<?>, MVPlugin> pluginMap;
+	protected final Set<Class<?>> resourceClzes;
 
 	protected WeaveErrorHandler errorHandler;
 	protected int serverId;
 
 	public DefMVFramewokerBuilder() {
 		this.properties = new HashMap<>();
+		this.resourceClzes = new HashSet<>();
 		this.resourceMgr = new HatchFactoryResourceMgr(properties);
 		this.pluginMap = new LinkedHashMap<>();
 		this.serverId = -1;
@@ -71,7 +74,7 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 				if (clz.getAnnotation(VPluginBean.class) != null)
 					addPlugin((MVPlugin) ReflectUtil.newObj(clz));
 			} else if (clz.getAnnotation(VResource.class) != null)
-				resourceMgr.addCellClass(clz);
+				resourceClzes.add(clz);
 		}
 	}
 
@@ -102,6 +105,7 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 			}
 		} else
 			setProperty(key, value.toString());
+
 	}
 
 	@Override
@@ -112,7 +116,7 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 					List<ClassResource> resources = ClassHelper.scanResources(e);
 					for (ClassResource r : resources)
 						MVUtil.loadProperties(r.getIn(), properties);
-				} else if (e.startsWith("file")) {
+				} else {
 					List<File> files = FileUtil.scanResources(e);
 					for (File f : files)
 						MVUtil.loadProperties(f, properties);
@@ -137,7 +141,8 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 		if (serverId < 0)
 			serverId = MVUtil.getClientServerId();
 		List<MVPlugin> plugins = new LinkedList<>(pluginMap.values());
-		DefMVFramework framework = new DefMVFramework(serverId, resourceMgr, properties, plugins, errorHandler);
+		DefMVFramework framework = new DefMVFramework(serverId, resourceMgr, properties, plugins, resourceClzes,
+				errorHandler);
 		return framework;
 	}
 
