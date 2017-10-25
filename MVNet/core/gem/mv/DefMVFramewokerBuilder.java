@@ -62,19 +62,27 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 	}
 
 	@Override
-	public void scanClass(String... classPaths) throws Throwable {
+	public void scanClass(String... classPaths) {
+		scanClass(null, classPaths);
+	}
+
+	@Override
+	public void scanClass(Class<?> clz, String... classPaths) {
 		Set<String> clzes = new LinkedHashSet<>();
 		for (String loc : classPaths) {
-			List<String> list = ClassHelper.scanClasses(loc);
-			clzes.addAll(list);
+			try {
+				List<String> list = ClassHelper.scanClasses(clz, loc);
+				clzes.addAll(list);
+			} catch (IOException e) {
+			}
 		}
 		for (String s : clzes) {
-			Class<?> clz = ReflectUtil.getClassByName(s);
-			if (MVPlugin.class.isAssignableFrom(clz)) {
-				if (clz.getAnnotation(VPluginBean.class) != null)
-					addPlugin((MVPlugin) ReflectUtil.newObj(clz));
-			} else if (clz.getAnnotation(VResource.class) != null)
-				resourceClzes.add(clz);
+			Class<?> c = ReflectUtil.getClassByName(s);
+			if (MVPlugin.class.isAssignableFrom(c)) {
+				if (c.getAnnotation(VPluginBean.class) != null)
+					addPlugin((MVPlugin) ReflectUtil.newObj(c));
+			} else if (c.getAnnotation(VResource.class) != null)
+				resourceClzes.add(c);
 		}
 	}
 
@@ -110,10 +118,15 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 
 	@Override
 	public void scanPropertiesFile(String... locations) {
+		scanPropertiesFile(null, locations);
+	}
+
+	@Override
+	public void scanPropertiesFile(Class<?> clz, String... locations) {
 		for (String e : locations)
 			try {
 				if (e.startsWith("classpath")) {
-					List<ClassResource> resources = ClassHelper.scanResources(e);
+					List<ClassResource> resources = ClassHelper.scanResources(clz, e);
 					for (ClassResource r : resources)
 						MVUtil.loadProperties(r.getIn(), properties);
 				} else {
