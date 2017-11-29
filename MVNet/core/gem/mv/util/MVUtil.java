@@ -42,6 +42,8 @@ public class MVUtil {
 	}
 
 	public static final <T> T jsonToObj(final String json, final Class<? extends T> clazz) {
+		if (json == null)
+			return null;
 		try {
 			return jsonMapper.readValue(json, clazz);
 		} catch (IOException e) {
@@ -50,6 +52,8 @@ public class MVUtil {
 	}
 
 	public static final <T> List<T> jsonToList(final String json, final Class<? extends T> clazz) {
+		if (json == null)
+			return null;
 		CollectionType type = jsonMapper.getTypeFactory().constructCollectionType(LinkedList.class, clazz);
 		try {
 			return jsonMapper.readValue(json, type);
@@ -59,6 +63,8 @@ public class MVUtil {
 	}
 
 	public static final <T> Map<String, T> jsonToMap(final String json, final Class<? extends T> clazz) {
+		if (json == null)
+			return null;
 		MapType type = jsonMapper.getTypeFactory().constructMapType(LinkedHashMap.class, String.class, clazz);
 		try {
 			return jsonMapper.readValue(json, type);

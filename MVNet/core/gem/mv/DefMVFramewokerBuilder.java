@@ -2,7 +2,6 @@ package gem.mv;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -10,7 +9,6 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import gem.mv.util.MVUtil;
@@ -92,28 +90,21 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 	}
 
 	@Override
-	public void setProperty(Map<String, String> props) {
-		for (Entry<String, String> e : props.entrySet())
-			setProperty(e.getKey(), e.getValue());
+	public void setProperty(String key, Object value) {
+		if (value == null)
+			properties.put(key, null);
+		else
+			properties.put(key, value.toString());
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public void setProperty(String key, Object value) {
-		if (value instanceof Collection)
-			setProperty(key, MVUtil.collection2Str((Collection<Object>) value));
-		else if (value instanceof Map) {
-			Map<?, ?> map = (Map<?, ?>) value;
-			for (Entry e : map.entrySet()) {
-				String k0 = e.getKey().toString();
-				if (key == null)
-					setProperty(k0, e.getValue());
-				else
-					setProperty(key + '.' + k0, e.getValue());
-			}
-		} else
-			setProperty(key, value.toString());
+	public void setProperty(Map<String, String> props) {
+		properties.putAll(props);
+	}
 
+	@Override
+	public String getProperty(String key) {
+		return properties.get(key);
 	}
 
 	@Override

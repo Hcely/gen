@@ -3,8 +3,10 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>gen</groupId>
 	<artifactId>MVNet</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
 	<repositories>
 		<repository>
@@ -20,7 +22,7 @@
 		<dependency>
 			<groupId>wv</groupId>
 			<artifactId>v</artifactId>
-			<version>1.5.7</version>
+			<version>1.5.9</version>
 		</dependency>
 		<dependency>
 			<groupId>wv</groupId>
@@ -30,12 +32,12 @@
 		<dependency>
 			<groupId>wv</groupId>
 			<artifactId>binary3</artifactId>
-			<version>1.0.6</version>
+			<version>1.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>wv</groupId>
 			<artifactId>plugin-core</artifactId>
-			<version>1.0.2</version>
+			<version>1.0.4</version>
 		</dependency>
 
 
