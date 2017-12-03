@@ -31,4 +31,9 @@ public final class ClusterAuthInfo implements WeaveAuthInfo {
 		return serverId;
 	}
 
+	@Override
+	public String toString() {
+		return id.toString();
+	}
+
 }

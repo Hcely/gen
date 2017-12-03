@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import gem.mv.cluster.ClusterConnMgrPlugin;
+import gem.mv.util.MVUtil;
 import v.common.helper.ParseUtil;
 import v.common.helper.ReflectUtil;
 import v.common.helper.StrUtil;
@@ -40,9 +41,9 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 
 	protected WeaveFramework weave;
 
-	DefMVFramework(int serverId, HatchFactoryResourceMgr resourceMgr, Map<String, String> properties,
-			List<MVPlugin> plugins, Set<Class<?>> resourceClzes, WeaveErrorHandler errorHandler) {
-		this.serverId = serverId;
+	DefMVFramework(HatchFactoryResourceMgr resourceMgr, Map<String, String> properties, List<MVPlugin> plugins,
+			Set<Class<?>> resourceClzes, WeaveErrorHandler errorHandler) {
+		this.serverId = ParseUtil.parse(properties.get(KEY_SERVER_ID), Integer.class, MVUtil.getClientServerId());
 		this.properties = properties;
 		this.plugins = plugins;
 		this.resourceClzes = resourceClzes;

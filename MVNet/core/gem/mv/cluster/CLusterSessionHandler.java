@@ -22,13 +22,10 @@ class CLusterSessionHandler implements WeaveSessionHandler {
 
 	@Override
 	public void onOpen(Wession session, boolean hasConflict) throws Throwable {
-		ClusterAuthInfo info = (ClusterAuthInfo) session.info();
-		synchronized (this) {
-			sessionMap.put(info.serverId(), session);
-		}
-		StringBuilder sb = new StringBuilder(32);
+		mgr.addSession(session);
+		StringBuilder sb = new StringBuilder(56);
 		InetSocketAddress addr = session.remoteAddress();
-		sb.append("server:").append(info.serverId()).append('(').append(addr.getAddress().getHostAddress()).append(':')
+		sb.append("server:").append(session.info()).append('(').append(addr.getAddress().getHostAddress()).append(':')
 				.append(addr.getPort()).append(") connection");
 		MVUtil.log.info(sb.toString());
 	}
@@ -67,9 +64,6 @@ class CLusterSessionHandler implements WeaveSessionHandler {
 
 	@Override
 	public void onDestory(Wession session) throws Throwable {
-		int serverId = ((ClusterAuthInfo) session.info()).serverId();
-		synchronized (this) {
-			sessionMap.remove(serverId, session);
-		}
+		mgr.removeSession(session);
 	}
 }

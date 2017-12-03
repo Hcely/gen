@@ -3,6 +3,7 @@ package gem.mv.util;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -10,14 +11,11 @@ import java.util.regex.Pattern;
 import v.common.helper.StrUtil;
 
 public final class IpRule {
+	protected final Pattern[] ipRules;
 	protected final Set<String> whiteList;
 	protected final Set<String> blackList;
-	protected final Pattern[] ipRules;
 
-	public IpRule(Collection<String> ipRules) {
-		this.whiteList = new HashSet<>();
-		this.blackList = new HashSet<>();
-
+	public IpRule(Collection<String> ipRules, List<String> whiteList, List<String> blackList) {
 		if (ipRules == null || ipRules.size() == 0)
 			this.ipRules = null;
 		else {
@@ -25,37 +23,24 @@ public final class IpRule {
 			for (String e : ipRules)
 				if (containsStar(e))
 					list.add(buildRule(e));
-				else
+				else {
+					if (whiteList == null)
+						whiteList = new LinkedList<>();
 					whiteList.add(e);
+				}
 			if (list.isEmpty())
 				this.ipRules = null;
 			else
 				this.ipRules = list.toArray(new Pattern[list.size()]);
 		}
-	}
-
-	public void addWhileIp(String ip) {
-		whiteList.add(ip);
-	}
-
-	public void addBlackIp(String ip) {
-		blackList.add(ip);
-	}
-
-	public void addWhileIps(Collection<String> ips) {
-		if (ips != null)
-			whiteList.addAll(ips);
-	}
-
-	public void addBlackIps(Collection<String> ips) {
-		if (ips != null)
-			blackList.addAll(ips);
+		this.whiteList = whiteList == null ? null : new HashSet<>(whiteList);
+		this.blackList = blackList == null ? null : new HashSet<>(blackList);
 	}
 
 	public boolean allow(String ip) {
-		if (whiteList.size() > 0 && whiteList.contains(ip))
+		if (whiteList != null && whiteList.contains(ip))
 			return true;
-		if (blackList.size() > 0 && blackList.contains(ip))
+		if (blackList != null && blackList.contains(ip))
 			return false;
 		if (ipRules != null) {
 			boolean b = true;

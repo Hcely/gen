@@ -29,7 +29,7 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 	public static final String KEY_ACCEPT_URI = "mv.cluster.acceptUri";
 
 	public static final String KEY_IP_RULES = "mv.cluster.ipRules";
-	public static final String KEY_IP_WHILE_LIST = "mv.cluster.ipWhiteList";
+	public static final String KEY_IP_WHITE_LIST = "mv.cluster.ipWhiteList";
 	public static final String KEY_IP_BLACK_LIST = "mv.cluster.ipBlackList";
 
 	public static final String DEF_SECRET_KEY = "dcfn66ZlRjYZaOIv78mXXwOp";
@@ -37,6 +37,8 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 	public static final String DEF_ACCEPT_URI = "/mv/cluster";
 
 	protected final IntHashMap<Wession> sessionMap;
+	protected volatile Wession[] servers;
+	protected volatile Wession[] clients;
 	protected final Binary3CoderMgr coderMgr;
 	protected final SimpleQueue<ClusterMsgHandler> handlers;
 	protected final int serverId;
@@ -77,11 +79,9 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 
 		if (serverId <= MVFramework.MAX_SERVER_ID) {
 			List<String> ipRules = context.getProperty(KEY_IP_RULES, List.class, null);
-			List<String> whileList = context.getProperty(KEY_IP_WHILE_LIST, List.class, null);
+			List<String> whiteList = context.getProperty(KEY_IP_WHITE_LIST, List.class, null);
 			List<String> blackList = context.getProperty(KEY_IP_BLACK_LIST, List.class, null);
-			this.rule = new IpRule(ipRules);
-			rule.addWhileIps(whileList);
-			rule.addBlackIps(blackList);
+			this.rule = new IpRule(ipRules, whiteList, blackList);
 			if (acceptPort < 0)
 				acceptPort = NetUtil.getEnablePort();
 			acceptWsUrl = MVUtil.getWsUrl(acceptHost, acceptPort, acceptUri);
@@ -133,8 +133,74 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 		return weave.conn(sessionSet.getName(), request, info);
 	}
 
+	final void addSession(Wession session) {
+		ClusterAuthInfo info = (ClusterAuthInfo) session.info();
+		int serverId = info.serverId();
+		synchronized (sessionMap) {
+			sessionMap.put(serverId, session);
+			if (serverId > MVFramework.MAX_SERVER_ID)
+				clients = add(clients, session);
+			else
+				servers = add(servers, session);
+		}
+	}
+
+	final void removeSession(Wession session) {
+		ClusterAuthInfo info = (ClusterAuthInfo) session.info();
+		int serverId = info.serverId();
+		synchronized (sessionMap) {
+			sessionMap.remove(serverId, session);
+			if (serverId > MVFramework.MAX_SERVER_ID)
+				clients = remove(clients, session);
+			else
+				servers = remove(servers, session);
+		}
+	}
+
+	private final Wession[] add(Wession[] sessions, Wession e) {
+		if (sessions == null)
+			return new Wession[] { e };
+		int length = sessions.length;
+		Wession[] array = new Wession[length + 1];
+		System.arraycopy(sessions, 0, array, 0, length);
+		array[length] = e;
+		return array;
+	}
+
+	private final Wession[] remove(Wession[] sessions, Wession e) {
+		if (sessions == null || sessions.length == 1)
+			return null;
+		int length = sessions.length;
+		Wession[] array = new Wession[length - 1];
+		for (int i = 0, j = 0; j < length; ++j) {
+			if (sessions[j] != e)
+				array[i++] = sessions[j];
+		}
+		return array;
+	}
+
 	public final Wession getClusterSession(int serverId) {
 		return sessionMap.get(serverId);
+	}
+
+	public final int sessionSize() {
+		return sessionMap.size();
+	}
+
+	public int serverSize() {
+		return servers == null ? 0 : servers.length;
+	}
+
+	public int clientSize() {
+		return clients == null ? 0 : clients.length;
+	}
+
+	public Wession[] getServers() {
+		return servers;
+	}
+
+	public Wession[] getClients() {
+		return clients;
 	}
 
 	public final String getAcceptWsUrl() {
@@ -178,4 +244,5 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 			if (handler.onClusterMsg(fromServerId, obj))
 				break;
 	}
+
 }

@@ -100,7 +100,7 @@ public class MVUtil {
 
 	private static final void parseKeyValue(String str, Map<String, String> properties) {
 		str = str.trim();
-		if (str.isEmpty())
+		if (str.isEmpty() || str.charAt(0) == '#')
 			return;
 		String[] s = StrUtil.spilt(str, '=', 2);
 		if (s.length == 2) {

@@ -2,6 +2,7 @@ package gem.mv;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -9,8 +10,10 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import gem.mv.cluster.ClusterConnMgrPlugin;
 import gem.mv.util.MVUtil;
 import v.common.helper.FileUtil;
 import v.common.helper.ReflectUtil;
@@ -28,14 +31,12 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 	protected final Set<Class<?>> resourceClzes;
 
 	protected WeaveErrorHandler errorHandler;
-	protected int serverId;
 
 	public DefMVFramewokerBuilder() {
 		this.properties = new HashMap<>();
 		this.resourceClzes = new HashSet<>();
 		this.resourceMgr = new HatchFactoryResourceMgr(properties);
 		this.pluginMap = new LinkedHashMap<>();
-		this.serverId = -1;
 	}
 
 	@Override
@@ -90,16 +91,38 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 	}
 
 	@Override
+	public void setPropertyIfAbsent(String key, String value) {
+		properties.putIfAbsent(key, value);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
 	public void setProperty(String key, Object value) {
 		if (value == null)
 			properties.put(key, null);
-		else
-			properties.put(key, value.toString());
+		else {
+			if (value instanceof Collection)
+				properties.put(key, MVUtil.collection2Str((Collection<Object>) value));
+			else
+				properties.put(key, value.toString());
+		}
+	}
+
+	@Override
+	public void setPropertyIfAbsent(String key, Object value) {
+		if (!properties.containsKey(key))
+			setProperty(key, value);
 	}
 
 	@Override
 	public void setProperty(Map<String, String> props) {
 		properties.putAll(props);
+	}
+
+	@Override
+	public void setPropertyIfAbsent(Map<String, String> props) {
+		for (Entry<String, String> e : props.entrySet())
+			properties.putIfAbsent(e.getKey(), e.getValue());
 	}
 
 	@Override
@@ -131,28 +154,60 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 	}
 
 	@Override
-	public void setServerId(int serverId) {
-		this.serverId = serverId;
-	}
-
-	@Override
 	public void setWeaveErrorHandler(WeaveErrorHandler errorHandler) {
 		this.errorHandler = errorHandler;
 	}
 
 	@Override
 	public MVFramework build() {
-		if (serverId < 0)
-			serverId = MVUtil.getClientServerId();
 		List<MVPlugin> plugins = new LinkedList<>(pluginMap.values());
-		DefMVFramework framework = new DefMVFramework(serverId, resourceMgr, properties, plugins, resourceClzes,
-				errorHandler);
+		DefMVFramework framework = new DefMVFramework(resourceMgr, properties, plugins, resourceClzes, errorHandler);
 		return framework;
 	}
 
 	@Override
 	public Class<DefMVFramework> getType() {
 		return DefMVFramework.class;
+	}
+
+	@Override
+	public void setServerId(int serverId) {
+		setProperty(MVFramework.KEY_SERVER_ID, serverId);
+	}
+
+	@Override
+	public void setClusterSecretKey(String secretKey) {
+		setProperty(ClusterConnMgrPlugin.KEY_SECRET_KEY, secretKey);
+	}
+
+	@Override
+	public void setClusterAcceptHost(String acceptHost) {
+		setProperty(ClusterConnMgrPlugin.KEY_ACCEPT_HOST, acceptHost);
+	}
+
+	@Override
+	public void setClusterAcceptPort(int acceptPort) {
+		setProperty(ClusterConnMgrPlugin.KEY_ACCEPT_PORT, acceptPort);
+	}
+
+	@Override
+	public void setClusterAcceptUri(String acceptUri) {
+		setProperty(ClusterConnMgrPlugin.KEY_ACCEPT_URI, acceptUri);
+	}
+
+	@Override
+	public void setClusterIpRules(List<String> ipRules) {
+		setProperty(ClusterConnMgrPlugin.KEY_IP_RULES, ipRules);
+	}
+
+	@Override
+	public void setClusterIpWhiteList(List<String> ipWhiteList) {
+		setProperty(ClusterConnMgrPlugin.KEY_IP_WHITE_LIST, ipWhiteList);
+	}
+
+	@Override
+	public void setClusterIpBlackList(List<String> ipBlackList) {
+		setProperty(ClusterConnMgrPlugin.KEY_IP_BLACK_LIST, ipBlackList);
 	}
 
 }

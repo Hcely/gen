@@ -12,12 +12,14 @@ import gem.mv.cluster.ClusterConnMgrPlugin;
 import gem.mv.plugin.ClusterConfigPlugin;
 import gem.mv.util.MVUtil;
 import gem.mv.util.ZKER;
+import v.common.helper.RandomHelper;
 import v.common.unit.thread.VThreadLoop;
 
 public class ZKClusterConfigPlugin implements ClusterConfigPlugin {
-	public static final String KEY_CLUSTER_ZK_SERVERS = "mv.cluster.zk.servers";
-	public static final String KEY_CLUSTER_ZK_SESSION_TIMEOUT = "mv.cluster.zk.sessionTimeout";
+	public static final String KEY_ZK_SERVERS = "mv.cluster.zk.servers";
+	public static final String KEY_ZK_SESSION_TIMEOUT = "mv.cluster.zk.sessionTimeout";
 	public static final String KEY_CLUSTER_INFO = "mv.cluster.info";
+
 	public static final String DEF_ZK_SERVERS = "127.0.0.1:2181";
 	public static final int DEF_SESSION_TIMEOUT = 4000;
 
@@ -43,8 +45,8 @@ public class ZKClusterConfigPlugin implements ClusterConfigPlugin {
 		List<ClusterInfo> infos = context.propertiesParseList(KEY_CLUSTER_INFO, ClusterInfo.class);
 		for (ClusterInfo e : infos)
 			addDefInfo(e);
-		zker.setZkServers(context.getProperty(KEY_CLUSTER_ZK_SERVERS, DEF_ZK_SERVERS));
-		zker.setSessionTime(context.getProperty(KEY_CLUSTER_ZK_SESSION_TIMEOUT, Integer.class, DEF_SESSION_TIMEOUT));
+		zker.setZkServers(context.getProperty(KEY_ZK_SERVERS, DEF_ZK_SERVERS));
+		zker.setSessionTime(context.getProperty(KEY_ZK_SESSION_TIMEOUT, Integer.class, DEF_SESSION_TIMEOUT));
 	}
 
 	@Override
@@ -57,10 +59,12 @@ public class ZKClusterConfigPlugin implements ClusterConfigPlugin {
 	public void onStart() {
 		int serverId = context.getServerId();
 		if (serverId < MVFramework.MAX_SERVER_ID) {
-			loop.execute(new ZKClusterServerTask(this));
+			loop.schedule(new ZKClusterServerTask(this), RandomHelper.randomInt(100));
 			zker.subscribeState(new ZKClusterStateListener(this));
 		}
+
 		zker.subscribeChild(PATH_CLUSTER_INFO, new ZKClusterSubcriber(this));
+		loop.schedule(new ZKClusterInfosHandler(this), RandomHelper.randomInt(100));
 		loop.schedule(new ZKClusterCheckTask(context.getServerId(), this, connMgr), 200, 2000);
 	}
 
