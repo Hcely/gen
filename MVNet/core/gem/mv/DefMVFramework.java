@@ -94,6 +94,7 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 		plugins.clear();
 		properties.clear();
 		resourceMgr.destory();
+		weave.destory();
 	}
 
 	@Override
