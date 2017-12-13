@@ -20,8 +20,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.databind.type.MapType;
 
+import gem.mv.MVFramework;
 import v.VContext;
 import v.common.helper.IOHelper;
+import v.common.helper.RandomHelper;
 import v.common.helper.StrUtil;
 import v.common.io.BytesOutputStream;
 import v.server.helper.NetUtil;
@@ -111,7 +113,12 @@ public class MVUtil {
 	}
 
 	public static final int getClientServerId() {
-		return (Integer.MAX_VALUE & NetUtil.getMachineCode()) | 0x40000000;
+		int i = RandomHelper.randomInt(0xFFFF);
+		i <<= 16;
+		i |= (0xFFFF & NetUtil.getMachineCode());
+		if (i <= MVFramework.MAX_SERVER_ID)
+			i |= 0x40000000;
+		return i;
 	}
 
 	public static final String collection2Str(Collection<Object> coll) {
