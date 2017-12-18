@@ -1,11 +1,13 @@
 package gem.mv;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import gem.mv.cluster.ClusterConnMgrPlugin;
@@ -56,8 +58,20 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 		plugins.add(0, connMgr);
 	}
 
+	private void logProps() {
+		List<String> list = new LinkedList<>();
+		for (Entry<String, String> e : properties.entrySet())
+			list.add(e.getKey() + "=" + e.getValue());
+		Collections.sort(list);
+		MVUtil.log.info("--init properties start--");
+		for (String e : list)
+			MVUtil.log.info(e);
+		MVUtil.log.info("--init properties end--");
+	}
+
 	@Override
 	protected void _init0() {
+		logProps();
 		for (MVPlugin p : plugins)
 			p.onCreate(this);
 		for (Class<?> e : resourceClzes)
@@ -65,7 +79,6 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 		resourceClzes.clear();
 		for (MVPlugin p : plugins)
 			resourceMgr.addCellObj(p);
-
 		resourceMgr.init();
 
 		for (MVPlugin p : plugins)

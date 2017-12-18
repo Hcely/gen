@@ -117,7 +117,7 @@ public class MVUtil {
 		i <<= 16;
 		i |= (0xFFFF & NetUtil.getMachineCode());
 		if (i <= MVFramework.MAX_SERVER_ID)
-			i |= 0x40000000;
+			i += MVFramework.MAX_SERVER_ID + 1;
 		return i;
 	}
 
