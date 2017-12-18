@@ -12,5 +12,7 @@ public interface ClusterConfigPlugin extends MVPlugin {
 
 	public void setConfig(String key, String config);
 
+	public void setTempConfig(String key, String config);
+
 	public String getConfig(String key);
 }

@@ -98,6 +98,11 @@ public class ZKClusterConfigPlugin implements ClusterConfigPlugin {
 	}
 
 	@Override
+	public void setTempConfig(String key, String config) {
+		zker.setTemp(key, config);
+	}
+
+	@Override
 	public String getConfig(String key) {
 		return zker.get(key);
 	}
