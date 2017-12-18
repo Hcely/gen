@@ -112,12 +112,20 @@ public class MVUtil {
 		}
 	}
 
-	public static final int getClientServerId() {
-		int i = RandomHelper.randomInt(0xFFFF);
-		i <<= 16;
-		i |= (0xFFFF & NetUtil.getMachineCode());
-		if (i <= MVFramework.MAX_SERVER_ID)
-			i += MVFramework.MAX_SERVER_ID + 1;
+	public static final int getRandomClientId() {
+		int i = RandomHelper.randomInt(Integer.MAX_VALUE) << 12;
+		i |= 0xFFF & NetUtil.getMachineCode();
+		i &= Integer.MAX_VALUE;
+		if (i > MVFramework.MAX_SERVER_ID)
+			return i;
+		return i + MVFramework.MAX_SERVER_ID + 1;
+	}
+
+	public static final int getRandomServiceId() {
+		int i = RandomHelper.randomInt(Integer.MAX_VALUE) << 12;
+		i |= 0xFFF & NetUtil.getMachineCode();
+		i &= Integer.MAX_VALUE;
+		i %= (MVFramework.MAX_SERVER_ID + 1);
 		return i;
 	}
 

@@ -45,7 +45,7 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 
 	DefMVFramework(HatchFactoryResourceMgr resourceMgr, Map<String, String> properties, List<MVPlugin> plugins,
 			Set<Class<?>> resourceClzes, WeaveErrorHandler errorHandler) {
-		this.serverId = ParseUtil.parse(properties.get(KEY_SERVER_ID), Integer.class, MVUtil.getClientServerId());
+		this.serverId = ParseUtil.parse(properties.get(KEY_SERVER_ID), Integer.class, MVUtil.getRandomClientId());
 		this.properties = properties;
 		this.plugins = plugins;
 		this.resourceClzes = resourceClzes;
