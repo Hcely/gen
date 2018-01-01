@@ -1,0 +1,78 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>zr</groupId>
+	<artifactId>zr-common</artifactId>
+	<version>0.0.1</version>
+	<packaging>jar</packaging>
+
+	<name>zr-common</name>
+	<url>http://maven.apache.org</url>
+
+	<repositories>
+		<repository>
+			<id>hcely</id>
+			<url>https://raw.githubusercontent.com/hcely/maven-repo/master/</url>
+		</repository>
+	</repositories>
+
+	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<v-version>1.6.1</v-version>
+		<common-version>3.3.2</common-version>
+		<jackson-version>2.8.10</jackson-version>
+		<log-version>2.8.1</log-version>
+	</properties>
+
+	<dependencies>
+		<!-- common start -->
+		<dependency>
+			<groupId>wv</groupId>
+			<artifactId>v</artifactId>
+			<version>${v-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>${common-version}</version>
+		</dependency>
+		<!-- common end -->
+		<!-- log start -->
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>${log-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-1.2-api</artifactId>
+			<version>${log-version}</version>
+		</dependency>
+		<!-- log end -->
+
+		<!-- json start -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson-version}</version>
+		</dependency>
+		<!-- json end -->
+
+		<!-- log start -->
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-1.2-api</artifactId>
+			<version>${log-version}</version>
+		</dependency>
+		<!-- log end -->
+	</dependencies>
+	<distributionManagement>
+		<repository>
+			<id>localRepository</id>
+			<url>file:E:/github/maven-repo</url>
+		</repository>
+	</distributionManagement>
+</project>
