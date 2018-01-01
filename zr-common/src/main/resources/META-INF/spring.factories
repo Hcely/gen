@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+zr.bean.AppContextConfiguration,\
+zr.bean.MybatisHelperConfiguration,\
+zr.controller.AopConfiguration
