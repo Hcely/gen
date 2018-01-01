@@ -1,4 +1,4 @@
-package zr.spring.bean;
+package zr.bean;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
