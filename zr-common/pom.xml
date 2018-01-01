@@ -84,11 +84,6 @@
 		<!-- log start -->
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-core</artifactId>
-			<version>${log-version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-1.2-api</artifactId>
 			<version>${log-version}</version>
 		</dependency>
@@ -273,4 +268,10 @@
 	<build>
 		<sourceDirectory>src/main</sourceDirectory>
 	</build>
+	<distributionManagement>
+		<repository>
+			<id>localRepository</id>
+			<url>file:E:/github/maven-repo</url>
+		</repository>
+	</distributionManagement>
 </project>
