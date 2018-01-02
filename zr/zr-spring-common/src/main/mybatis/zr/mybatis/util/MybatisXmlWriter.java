@@ -85,7 +85,7 @@ public class MybatisXmlWriter {
 
 	private static final void writeInsertStatement(MapperInfo info, StringBuilder sb) {
 		sb.append("<insert id=\"insert\" parameterType=\"map\"");
-		Field incField = info.getIncField();
+		Field incField = info.getEntityInfo().getIncField();
 		if (incField != null)
 			sb.append(" useGeneratedKeys=\"true\" keyProperty=\"").append(incField.getName()).append('"');
 		sb.append(">\n");
@@ -100,7 +100,7 @@ public class MybatisXmlWriter {
 
 	private static final void writeSelectStatement(MapperInfo info, StringBuilder sb) {
 		sb.append("<select id=\"selectObj\" parameterType=\"").append(SQL).append("\" resultType=\"")
-				.append(info.getEntityClz().getName()).append("\">\n");
+				.append(info.getEntityInfo().getClz().getName()).append("\">\n");
 		sb.append("SELECT\n");
 		sb.append("<include refid=\"_SELECT\" />\n");
 		sb.append("FROM\n");

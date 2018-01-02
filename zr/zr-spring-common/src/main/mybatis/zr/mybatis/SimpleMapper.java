@@ -12,6 +12,8 @@ import java.util.Map;
 import org.apache.ibatis.cursor.Cursor;
 import org.mybatis.spring.SqlSessionTemplate;
 
+import zr.mybatis.unit.DateBuilder;
+import zr.mybatis.unit.EntityInfo;
 import zr.mybatis.unit.MapperInfo;
 import zr.mybatis.unit.Page;
 import zr.mybatis.unit.sql.SqlCriteria;
@@ -19,14 +21,7 @@ import zr.mybatis.util.MybatisUtil;
 
 public final class SimpleMapper<T> {
 	private final MapperInfo mapperInfo;
-	private final SqlSessionTemplate template;
-	private final Field[] fields;
-	private final Field incField;
-	private final Field primaryField;
-	private final String primaryKey;
-	private final String createTimeCol;
-	private final String modifyTimeCol;
-	private final boolean ignoreEmpty;
+	private final EntityInfo entityInfo;
 
 	private final String insertStatement;
 	private final String selectStatement;
@@ -37,14 +32,7 @@ public final class SimpleMapper<T> {
 
 	SimpleMapper(String mapperName, MapperInfo info) {
 		this.mapperInfo = info;
-		this.template = info.getTemplate();
-		this.fields = info.getFields();
-		this.incField = info.getIncField();
-		this.primaryField = info.getPrimaryField();
-		this.primaryKey = primaryField.getName();
-		this.createTimeCol = info.getCreateTimeCol();
-		this.modifyTimeCol = info.getModifyTimeCol();
-		this.ignoreEmpty = info.isIgnoreEmpty();
+		this.entityInfo = info.getEntityInfo();
 
 		this.insertStatement = mapperName + ".insert";
 		this.selectStatement = mapperName + ".selectObj";
@@ -59,37 +47,14 @@ public final class SimpleMapper<T> {
 	}
 
 	public SqlSessionTemplate getTemplate() {
-		return template;
+		return mapperInfo.getTemplate();
 	}
 
 	public int insert(T e) {
-		Map<String, Object> map = new LinkedHashMap<>();
-		for (Field f : fields) {
-			try {
-				Object value = f.get(e);
-				if (value == null)
-					continue;
-				map.put(f.getName(), value);
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
-		}
-		long time = System.currentTimeMillis();
-		if (createTimeCol != null && !map.containsKey(createTimeCol))
-			map.put(createTimeCol, time);
-		if (modifyTimeCol != null && !map.containsKey(modifyTimeCol))
-			map.put(modifyTimeCol, time);
-
-		int hr = template.insert(insertStatement, map);
-		if (incField != null) {
-			Number value = (Number) map.get(incField.getName());
-			if (value != null)
-				try {
-					incField.set(e, MybatisUtil.getNumber(value, incField.getType()));
-				} catch (Exception e1) {
-					e1.printStackTrace();
-				}
-		}
+		Map<String, Object> map = objToMap(e);
+		int hr = mapperInfo.getTemplate().insert(insertStatement, map);
+		if (hr > 0)
+			setIncField(map, e);
 		return hr;
 	}
 
@@ -101,22 +66,24 @@ public final class SimpleMapper<T> {
 	}
 
 	public T selectById(Object value) {
-		return template.selectOne(selectStatement, new SqlCriteria().eq(primaryKey, value).limit(1));
+		return mapperInfo.getTemplate().selectOne(selectStatement,
+				new SqlCriteria().eq(entityInfo.getPrimaryKey(), value).limit(1));
 	}
 
 	public List<T> selectByIds(Collection<?> value) {
-		return selectListBy(primaryKey, value);
+		return selectListBy(entityInfo.getPrimaryKey(), value);
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public <K> Map<K, T> selectByIdsAsMap(Collection<K> value) {
 		Map map = new HashMap();
-		if (!value.isEmpty()) {
-			Cursor<T> curtor = template.selectCursor(selectStatement, new SqlCriteria().in(primaryKey, value));
-			for (Iterator<T> it = curtor.iterator(); it.hasNext();) {
-				T e = it.next();
-				map.put(getPrimaryValue(e), e);
-			}
+		if (value.isEmpty())
+			return map;
+		Cursor<T> curtor = mapperInfo.getTemplate().selectCursor(selectStatement,
+				new SqlCriteria().in(entityInfo.getPrimaryKey(), value));
+		for (Iterator<T> it = curtor.iterator(); it.hasNext();) {
+			T e = it.next();
+			map.put(getPrimaryValue(e), e);
 		}
 		return map;
 	}
@@ -134,10 +101,10 @@ public final class SimpleMapper<T> {
 	}
 
 	public T selectOne(SqlCriteria criteria) {
-		if (primaryKey != null)
-			criteria.desc(primaryKey);
+		if (entityInfo.getPrimaryKey() != null)
+			criteria.desc(entityInfo.getPrimaryKey());
 		criteria.limit(1);
-		return template.selectOne(selectStatement, criteria);
+		return mapperInfo.getTemplate().selectOne(selectStatement, criteria);
 	}
 
 	public Page<T> selectPage(SqlCriteria criteria, int offset, int count) {
@@ -151,56 +118,42 @@ public final class SimpleMapper<T> {
 	}
 
 	public List<T> selectList(SqlCriteria criteria) {
-		return template.selectList(selectStatement, criteria);
+		return mapperInfo.getTemplate().selectList(selectStatement, criteria);
 	}
 
 	public Map<String, Object> selectMapOne(SqlCriteria criteria) {
 		criteria.limit(1);
-		return template.selectOne(selectMapStatement, criteria);
+		return mapperInfo.getTemplate().selectOne(selectMapStatement, criteria);
 	}
 
 	public List<Map<String, Object>> selectMapList(SqlCriteria criteria) {
-		return template.selectList(selectMapStatement, criteria);
+		return mapperInfo.getTemplate().selectList(selectMapStatement, criteria);
 	}
 
 	public int update(SqlCriteria criteria) {
 		if (criteria.isUpdatesValid()) {
-			if (modifyTimeCol != null)
-				criteria.update(modifyTimeCol, System.currentTimeMillis());
-			return template.update(updateStatement, criteria);
+			updateModifyTime(criteria);
+			return mapperInfo.getTemplate().update(updateStatement, criteria);
 		}
 		return 0;
 	}
 
 	public int updateById(SqlCriteria criteria, Object id) {
-		return update(criteria.eq(primaryKey, id));
+		return update(criteria.eq(entityInfo.getPrimaryKey(), id));
 	}
 
 	public int updateObj(final T update) {
-		return updateObj(update, ignoreEmpty);
+		return updateObj(update, mapperInfo.isIgnoreEmpty());
 	}
 
 	public int updateObj(final T update, boolean ignoreEmpty) {
-		SqlCriteria criteria = new SqlCriteria();
-		Object v;
-		for (Field f : fields)
-			try {
-				if (f == primaryField)
-					continue;
-				if ((v = f.get(update)) == null)
-					continue;
-				if (ignoreEmpty && (v instanceof String))
-					if (((String) v).isEmpty())
-						continue;
-				criteria.update(f.getName(), v);
-			} catch (Throwable e) {
-			}
-		criteria.eq(primaryKey, getPrimaryValue(update));
+		SqlCriteria criteria = setUpdate(null, update, entityInfo.getPrimaryField(), ignoreEmpty);
+		criteria.eq(entityInfo.getPrimaryKey(), getPrimaryValue(update));
 		return update(criteria);
 	}
 
 	public int updateObj(final T update, SqlCriteria criteria) {
-		return updateObj(update, criteria, ignoreEmpty);
+		return updateObj(update, criteria, mapperInfo.isIgnoreEmpty());
 	}
 
 	public int updateObj(final T update, SqlCriteria criteria, boolean ignoreEmpty) {
@@ -209,25 +162,31 @@ public final class SimpleMapper<T> {
 	}
 
 	public int deleteById(Object value) {
-		return deleteBy(primaryKey, value);
+		return deleteBy(entityInfo.getPrimaryKey(), value);
 	}
 
 	public int deleteBy(String key, Object value) {
-		return template.delete(deleteStatement, new SqlCriteria().eq(key, value));
+		return mapperInfo.getTemplate().delete(deleteStatement, new SqlCriteria().eq(key, value));
 	}
 
 	public int delete(SqlCriteria criteria) {
-		return template.delete(deleteStatement, criteria);
+		return mapperInfo.getTemplate().delete(deleteStatement, criteria);
 	}
 
 	public SqlCriteria setUpdate(SqlCriteria criteria, T update) {
+		return setUpdate(criteria, update, null, mapperInfo.isIgnoreEmpty());
+	}
+
+	private SqlCriteria setUpdate(SqlCriteria criteria, T update, Field ignoreField, boolean ignoreEmpty) {
 		if (criteria == null)
 			criteria = new SqlCriteria();
 		if (update == null)
 			return criteria;
 		Object v;
-		for (Field f : fields)
+		for (Field f : entityInfo.getFields())
 			try {
+				if (f == ignoreField)
+					continue;
 				if ((v = f.get(update)) == null)
 					continue;
 				if (ignoreEmpty && (v instanceof String))
@@ -245,7 +204,7 @@ public final class SimpleMapper<T> {
 		if (condition == null)
 			return criteria;
 		Object v;
-		for (Field f : fields)
+		for (Field f : entityInfo.getFields())
 			try {
 				if ((v = f.get(condition)) != null)
 					criteria.eq(f.getName(), v);
@@ -255,17 +214,65 @@ public final class SimpleMapper<T> {
 	}
 
 	public int count(SqlCriteria criteria) {
-		return template.selectOne(countStatement, criteria);
+		return mapperInfo.getTemplate().selectOne(countStatement, criteria);
 	}
 
-	public Object getPrimaryValue(T obj) {
+	private void setIncField(Map<String, Object> map, T obj) {
+		Field incField = entityInfo.getIncField();
+		if (incField == null)
+			return;
+		Number value = (Number) map.get(incField.getName());
+		if (value == null)
+			return;
 		try {
-			return primaryField.get(obj);
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
+			incField.set(obj, MybatisUtil.getNumber(value, incField.getType()));
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void updateModifyTime(SqlCriteria criteria) {
+		DateBuilder dateBuilder = entityInfo.getModifyTimeBuilder();
+		if (dateBuilder == null)
+			return;
+		if (criteria.containUpdate(dateBuilder.getName()))
+			return;
+		long time = System.currentTimeMillis();
+		criteria.update(dateBuilder.getName(), dateBuilder.getDate(time));
+	}
+
+	private Map<String, Object> objToMap(T obj) {
+		Map<String, Object> map = new LinkedHashMap<>();
+		for (Field f : entityInfo.getFields()) {
+			try {
+				Object value = f.get(obj);
+				if (value == null)
+					continue;
+				map.put(f.getName(), value);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		long time = System.currentTimeMillis();
+		
+		DateBuilder dateBuilder = entityInfo.getCreateTimeBuilder();
+		if (dateBuilder != null && !map.containsKey(dateBuilder.getName()))
+			map.put(dateBuilder.getName(), dateBuilder.getDate(time));
+		dateBuilder = entityInfo.getModifyTimeBuilder();
+		if (dateBuilder != null && !map.containsKey(dateBuilder.getName()))
+			map.put(dateBuilder.getName(), dateBuilder.getDate(time));
+		return map;
+	}
+
+	private Object getPrimaryValue(T obj) {
+		Field f = entityInfo.getPrimaryField();
+		if (f != null)
+			try {
+				return f.get(obj);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		return null;
 	}
+
 }

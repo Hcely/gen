@@ -1,6 +1,7 @@
 package zr.mybatis.unit;
 
 import java.lang.reflect.Field;
+import java.sql.Timestamp;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -19,27 +20,33 @@ public final class EntityInfo {
 	}
 
 	public static final boolean isCreateTimeColumn(Field field) {
-		Class<?> type = field.getType();
-		if (type != Long.class || type != long.class)
-			return false;
-		String name = field.getName();
-		if (name.equalsIgnoreCase("createTime"))
-			return true;
-		if (name.equalsIgnoreCase("createdTime"))
+		final String name = field.getName();
+		if (name.equalsIgnoreCase("createTime") || name.equalsIgnoreCase("createdTime")
+				|| name.equalsIgnoreCase("createDate") || name.equalsIgnoreCase("createdDate"))
 			return true;
 		return false;
 	}
 
 	public static final boolean isModifyTimeColumn(Field field) {
-		Class<?> type = field.getType();
-		if (type != Long.class || type != long.class)
-			return false;
-		String name = field.getName();
-		if (name.equalsIgnoreCase("modifyTime"))
-			return true;
-		if (name.equalsIgnoreCase("updateTime"))
+		final String name = field.getName();
+		if (name.equalsIgnoreCase("modifyTime") || name.equalsIgnoreCase("updateTime")
+				|| name.equalsIgnoreCase("updatedTime") || name.equalsIgnoreCase("modifyDate")
+				|| name.equalsIgnoreCase("updateDate") || name.equalsIgnoreCase("updatedDate"))
 			return true;
 		return false;
+	}
+
+	public static final DateBuilder getDateBuilder(Field field) {
+		Class<?> type = field.getType();
+		if (type == Long.class || type == long.class)
+			return new LongDateBuilder(field.getName());
+		if (type == Timestamp.class)
+			return new TimestampDateBuilder(field.getName());
+		if (type == java.sql.Date.class)
+			return new SqlDateBuilder(field.getName());
+		if (type == java.util.Date.class)
+			return new DateBuilder(field.getName());
+		return null;
 	}
 
 	private static final Field getPrimaryKeyByName(Class<?> clz, Map<String, Field> fieldMap) {
@@ -54,14 +61,15 @@ public final class EntityInfo {
 		return null;
 	}
 
-	protected final Class<?> clz;
-	protected final Field[] fields;
-	protected final Map<String, Field> fieldMap;
+	protected Class<?> clz;
+	protected Field[] fields;
+	protected Map<String, Field> fieldMap;
+	protected String primaryKey;
 	protected Field primaryField;
 	protected Field incField;
 
-	protected String createTimeCol;
-	protected String modifyTimeCol;
+	protected DateBuilder createTimeBuilder;
+	protected DateBuilder modifyTimeBuilder;
 
 	public EntityInfo(Class<?> clz, Field[] fields) {
 		this.clz = clz;
@@ -74,13 +82,16 @@ public final class EntityInfo {
 				primaryField = f;
 			if (f.getAnnotation(AutoIncrement.class) != null)
 				incField = f;
+
 			if (isModifyTimeColumn(f))
-				modifyTimeCol = f.getName();
-			if (isCreateTimeColumn(f))
-				createTimeCol = f.getName();
+				modifyTimeBuilder = getDateBuilder(f);
+			else if (isCreateTimeColumn(f))
+				createTimeBuilder = getDateBuilder(f);
 		}
 		if (primaryField == null)
 			primaryField = getPrimaryKeyByName(clz, fieldMap);
+		if (primaryField != null)
+			primaryKey = primaryField.getName();
 	}
 
 	public Class<?> getClz() {
@@ -95,6 +106,10 @@ public final class EntityInfo {
 		return fieldMap;
 	}
 
+	public String getPrimaryKey() {
+		return primaryKey;
+	}
+
 	public Field getPrimaryField() {
 		return primaryField;
 	}
@@ -103,19 +118,17 @@ public final class EntityInfo {
 		return incField;
 	}
 
-	public String getCreateTimeCol() {
-		return createTimeCol;
+	public DateBuilder getCreateTimeBuilder() {
+		return createTimeBuilder;
 	}
 
-	public String getModifyTimeCol() {
-		return modifyTimeCol;
+	public DateBuilder getModifyTimeBuilder() {
+		return modifyTimeBuilder;
 	}
 
-	public Object newInstance() {
-		try {
-			return clz.newInstance();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+	@Override
+	public int hashCode() {
+		return clz.hashCode();
 	}
+
 }

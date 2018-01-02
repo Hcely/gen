@@ -24,7 +24,7 @@
 		<dependency>
 			<groupId>zr</groupId>
 			<artifactId>zr-common</artifactId>
-			<version>0.0.1</version>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	<distributionManagement>
