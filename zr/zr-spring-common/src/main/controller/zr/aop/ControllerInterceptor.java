@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -69,8 +70,8 @@ public class ControllerInterceptor
 	protected Map<Class<?>, AopFilter> filterMap;
 	protected Map<Class<?>, AopLogger> loggerMap;
 	protected AopLogger defLogger;
-
 	protected Map<Method, MethodFilterSet> filterSetMap;
+	protected ConcurrentLinkedQueue<MethodFilterSet> filterSets;
 
 	public ControllerInterceptor() {
 	}
@@ -83,9 +84,10 @@ public class ControllerInterceptor
 	@PostConstruct
 	@Override
 	public void init() {
+		this.filterSetMap = new HashMap<>();
+		this.filterSets = new ConcurrentLinkedQueue<>();
 		initBeans();
 		initFilterLoggers();
-		filterSetMap = new HashMap<>();
 	}
 
 	private final void initBeans() {
@@ -251,8 +253,8 @@ public class ControllerInterceptor
 		if (filterSet == null)
 			synchronized (filterSetMap) {
 				if ((filterSet = filterSetMap.get(method)) == null) {
-					filterSet = Util.getFilterSet(method, this);
-					filterSetMap.put(method, filterSet);
+					filterSetMap.put(method, filterSet = Util.getFilterSet(method, this));
+					filterSets.add(filterSet);
 				}
 			}
 		return filterSet;

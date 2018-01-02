@@ -5,7 +5,8 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class ApiCount {
 	public static final int LENGTH = 8;
-	protected long time;
+	protected long startTime;
+	protected long endTime;
 	protected final AtomicInteger count;
 	/**
 	 * 100,200,500,1000,2000,4000,8000,more
@@ -19,10 +20,14 @@ public class ApiCount {
 	}
 
 	public void reset(long time) {
-		this.time = time;
+		this.startTime = time;
 		count.set(0);
 		for (int i = 0; i < LENGTH; ++i)
 			takeCounts.set(i, 0);
+	}
+
+	public void finish(long time) {
+		this.endTime = time;
 	}
 
 	public void inc(long takeTime) {
@@ -50,10 +55,27 @@ public class ApiCount {
 	}
 
 	/**
-	 * 100,200,500,1000,2000,4000,8000,more
+	 * 100ms,200ms,500ms,1000ms,2000ms,4000ms,8000ms,more
 	 */
 	public int getTakeCount(int idx) {
 		return takeCounts.get(idx);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder(128);
+		sb.append("startTime:").append(startTime);
+		sb.append(",endTime:").append(endTime);
+		sb.append(",count:").append(count.get());
+		sb.append(",100ms:").append(takeCounts.get(0));
+		sb.append(",200ms:").append(takeCounts.get(1));
+		sb.append(",500ms:").append(takeCounts.get(2));
+		sb.append(",1000ms:").append(takeCounts.get(3));
+		sb.append(",2000ms:").append(takeCounts.get(4));
+		sb.append(",4000ms:").append(takeCounts.get(5));
+		sb.append(",8000ms:").append(takeCounts.get(6));
+		sb.append(",more:").append(takeCounts.get(7));
+		return sb.toString();
 	}
 
 }

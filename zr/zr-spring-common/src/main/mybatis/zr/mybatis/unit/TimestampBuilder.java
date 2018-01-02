@@ -2,9 +2,9 @@ package zr.mybatis.unit;
 
 import java.sql.Timestamp;
 
-public class TimestampDateBuilder extends DateBuilder {
+public class TimestampBuilder extends DateBuilder {
 
-	public TimestampDateBuilder(String name) {
+	public TimestampBuilder(String name) {
 		super(name);
 	}
 

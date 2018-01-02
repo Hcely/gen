@@ -3,7 +3,6 @@ package zr.mybatis.unit;
 import java.util.Date;
 
 public class DateBuilder {
-
 	protected final String name;
 
 	public DateBuilder(String name) {

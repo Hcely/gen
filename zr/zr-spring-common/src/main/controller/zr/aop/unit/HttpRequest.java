@@ -31,10 +31,7 @@ public class HttpRequest {
 	}
 
 	protected static HttpRequest getResponseRequest(HttpServletRequest request, HResult hr) {
-		HttpRequest req = reqTL.get();
-		req.set(request, null);
-		req.hr = hr;
-		return req;
+		return reqTL.get().set(request, hr);
 	}
 
 	protected static void finishRequest(HttpRequest req, HResult hr) {
@@ -87,9 +84,29 @@ public class HttpRequest {
 		return this;
 	}
 
+	private final HttpRequest set(HttpServletRequest request, HResult hr) {
+		checkClear();
+		this.request = request;
+		this.remoteIp = SpringUtil.getRemoteIp(request);
+		this.filterSet = null;
+		this.requestTime = System.currentTimeMillis();
+		String content = HeaderJacksonMessageConverter.getClearCache();
+		if (content != null) {
+			paramMap = JsonUtil.json2Obj(content);
+			contentType = REQUEST_JSON;
+		} else if (request instanceof MultipartHttpServletRequest)
+			contentType = REQUEST_MULTIPART;
+		else
+			contentType = REQUEST_NORMAL;
+		this.takeTime = 0;
+		this.hr = hr;
+		return this;
+	}
+
 	private final void finish(HResult hr) {
 		this.takeTime = System.currentTimeMillis() - requestTime;
 		this.hr = hr;
+		filterSet.count(takeTime);
 	}
 
 	private final void checkClear() {

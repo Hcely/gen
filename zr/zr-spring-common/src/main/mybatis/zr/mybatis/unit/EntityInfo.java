@@ -2,6 +2,9 @@ package zr.mybatis.unit;
 
 import java.lang.reflect.Field;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -39,13 +42,19 @@ public final class EntityInfo {
 	public static final DateBuilder getDateBuilder(Field field) {
 		Class<?> type = field.getType();
 		if (type == Long.class || type == long.class)
-			return new LongDateBuilder(field.getName());
+			return new LongBuilder(field.getName());
 		if (type == Timestamp.class)
-			return new TimestampDateBuilder(field.getName());
+			return new TimestampBuilder(field.getName());
 		if (type == java.sql.Date.class)
 			return new SqlDateBuilder(field.getName());
 		if (type == java.util.Date.class)
 			return new DateBuilder(field.getName());
+		if (type == LocalDate.class)
+			return new LocalDateBuilder(field.getName());
+		if (type == LocalDateTime.class)
+			return new LocalDateTimeBuilder(field.getName());
+		if (type == LocalTime.class)
+			return new LocalTimeBuilder(field.getName());
 		return null;
 	}
 

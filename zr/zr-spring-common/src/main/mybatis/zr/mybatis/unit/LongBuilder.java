@@ -1,8 +1,8 @@
 package zr.mybatis.unit;
 
-public class LongDateBuilder extends DateBuilder {
+public class LongBuilder extends DateBuilder {
 
-	public LongDateBuilder(String name) {
+	public LongBuilder(String name) {
 		super(name);
 	}
 
