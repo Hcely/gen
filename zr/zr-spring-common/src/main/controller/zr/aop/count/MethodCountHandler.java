@@ -1,7 +1,9 @@
 package zr.aop.count;
 
-import zr.aop.unit.count.MethodCountSumInfo;
+import java.util.List;
+
+import zr.aop.unit.count.MethodCountInfo;
 
 public interface MethodCountHandler {
-	public void onLog(MethodCountSumInfo countSum);
+	public void handle(List<MethodCountInfo> countInfos);
 }

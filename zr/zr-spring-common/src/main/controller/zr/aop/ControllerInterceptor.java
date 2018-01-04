@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -54,6 +53,8 @@ import zr.aop.annotation.Filter;
 import zr.aop.annotation.FilterConfig;
 import zr.aop.annotation.FilterDepend;
 import zr.aop.annotation.LoggerConfig;
+import zr.aop.count.MethodCountHandler;
+import zr.aop.count.MethodCountMgr;
 import zr.aop.unit.FilterInfo;
 import zr.aop.unit.HttpRequest;
 import zr.aop.unit.MethodFilterSet;
@@ -71,7 +72,7 @@ public class ControllerInterceptor
 	protected Map<Class<?>, AopLogger> loggerMap;
 	protected AopLogger defLogger;
 	protected Map<Method, MethodFilterSet> filterSetMap;
-	protected ConcurrentLinkedQueue<MethodFilterSet> filterSets;
+	protected MethodCountMgr countMgr;
 
 	public ControllerInterceptor() {
 	}
@@ -85,9 +86,9 @@ public class ControllerInterceptor
 	@Override
 	public void init() {
 		this.filterSetMap = new HashMap<>();
-		this.filterSets = new ConcurrentLinkedQueue<>();
 		initBeans();
 		initFilterLoggers();
+		initMethodCount();
 	}
 
 	private final void initBeans() {
@@ -114,6 +115,11 @@ public class ControllerInterceptor
 		defLogger = SpringUtil.getBean(context, AopLogger.class);
 		if (defLogger == null)
 			defLogger = DefLogger.INSTANCE;
+	}
+
+	private final void initMethodCount() {
+		MethodCountHandler handler = SpringUtil.getBean(context, MethodCountHandler.class);
+		this.countMgr = new MethodCountMgr(handler);
 	}
 
 	private final void scanFilterLoggerClz(Class<?> clz, Set<Class<?>> filterClzs, Set<Class<?>> loggerClzs) {
@@ -163,6 +169,8 @@ public class ControllerInterceptor
 			loggerMap.clear();
 		if (filterSetMap != null)
 			filterSetMap.clear();
+		if (countMgr != null)
+			countMgr.destory();
 		context = null;
 	}
 
@@ -254,7 +262,7 @@ public class ControllerInterceptor
 			synchronized (filterSetMap) {
 				if ((filterSet = filterSetMap.get(method)) == null) {
 					filterSetMap.put(method, filterSet = Util.getFilterSet(method, this));
-					filterSets.add(filterSet);
+					countMgr.addFilterSet(filterSet);
 				}
 			}
 		return filterSet;

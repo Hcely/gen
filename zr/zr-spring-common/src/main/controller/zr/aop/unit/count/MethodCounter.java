@@ -10,7 +10,7 @@ public class MethodCounter {
 		this.swapIdx = 0;
 		for (int i = 0, len = swapCounts.length; i < len; ++i)
 			swapCounts[i] = new MethodCount();
-		this.curCount = swapCounts[0];
+		swap();
 	}
 
 	public final int inc(long takeTime) {

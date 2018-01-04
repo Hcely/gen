@@ -1,35 +1,29 @@
 package zr.aop.count;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import v.Destoryable;
-import v.Initializable;
 import v.common.unit.DateCron;
 import v.common.unit.thread.VThreadLoop;
 import zr.aop.unit.MethodFilterSet;
-import zr.aop.unit.count.MethodCount;
-import zr.aop.unit.count.MethodCountSumInfo;
+import zr.aop.unit.count.MethodCountInfo;
 
-public class MethodCountMgr implements Initializable, Destoryable {
+public class MethodCountMgr implements Destoryable {
 	protected final ConcurrentLinkedQueue<MethodFilterSet> filterSets;
 	protected final MethodCountHandler handler;
-	protected final Map<String, MethodCountSumInfo> countSumMap;
+	protected final List<MethodCountInfo> infos;
 	protected VThreadLoop loop;
 
 	public MethodCountMgr(MethodCountHandler handler) {
 		this.filterSets = new ConcurrentLinkedQueue<>();
-		this.handler = handler;
-		this.countSumMap = new HashMap<>();
-	}
-
-	@Override
-	public void init() {
-		loop = new VThreadLoop();
+		this.handler = handler == null ? DefMethodCountHandler.INSTANCE : handler;
+		this.infos = new LinkedList<>();
+		this.loop = new VThreadLoop();
 		loop.start();
-		loop.schedule(new MethodCountCollectTask(this), new DateCron(-1, -1, -20));
-		loop.schedule(new MethodCountLogTask(this), new DateCron(-1, -1, 0));
+		loop.schedule(1, new MethodCountCollectTask(this), new DateCron(-1, -1, 0));
+		loop.schedule(2, new MethodCountOutputTask(this), new DateCron(-1, -1, 0));
 	}
 
 	@Override
@@ -42,16 +36,14 @@ public class MethodCountMgr implements Initializable, Destoryable {
 		filterSets.add(filterSet);
 	}
 
-	void addCount(String methodName, MethodCount count) {
-		MethodCountSumInfo info = countSumMap.get(methodName);
-		if (info == null)
-			countSumMap.put(methodName, info = new MethodCountSumInfo(methodName));
-		info.add(count);
+	void collectCountInfos() {
+		for (MethodFilterSet e : filterSets)
+			infos.add(new MethodCountInfo(e.getMethodName(), e.swap()));
 	}
 
-	void resetCounts() {
-		for (MethodCountSumInfo e : countSumMap.values())
-			e.reset();
+	void outputCountInfos() {
+		handler.handle(infos);
+		infos.clear();
 	}
 
 }
