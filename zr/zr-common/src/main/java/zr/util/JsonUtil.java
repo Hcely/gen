@@ -13,7 +13,8 @@ import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.databind.type.MapLikeType;
 
 public class JsonUtil {
-	public static final ObjectMapper mapper = new ObjectMapper().setSerializationInclusion(Include.NON_NULL)
+	public static final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules()
+			.setSerializationInclusion(Include.NON_NULL)
 			.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 			.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
 
