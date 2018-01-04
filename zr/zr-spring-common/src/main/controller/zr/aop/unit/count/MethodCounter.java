@@ -1,11 +1,16 @@
 package zr.aop.unit.count;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class MethodCounter {
+	protected final AtomicLong count;
 	protected final MethodCount[] swapCounts;
 	protected int swapIdx;
+
 	protected volatile MethodCount curCount;
 
 	public MethodCounter() {
+		this.count = new AtomicLong(0);
 		this.swapCounts = new MethodCount[2];
 		this.swapIdx = 0;
 		for (int i = 0, len = swapCounts.length; i < len; ++i)
@@ -13,8 +18,12 @@ public class MethodCounter {
 		swap();
 	}
 
-	public final int inc(long takeTime) {
-		return curCount.inc(takeTime);
+	public final long inc() {
+		return count.incrementAndGet();
+	}
+
+	public final void takeCount(long takeTime) {
+		curCount.takeCount(takeTime);
 	}
 
 	public final MethodCount swap() {

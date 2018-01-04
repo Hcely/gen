@@ -2,33 +2,33 @@ package zr.aop.unit.count;
 
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
-public class MethodCount {
-	public static final int SHIFT = 6;
-	public static final int LENGTH = 10;
+public class MethodCount extends AtomicIntegerArray {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	public static final int SHIFT = 5;
+	public static final int LENGTH = 12;
 	protected long startTime;
 	protected long endTime;
-	/**
-	 * count,64ms,128ms,256ms,512ms,1024ms,2048ms,4096ms,8192ms,16384ms,more
-	 */
-	protected final AtomicIntegerArray arrays;
 
 	public MethodCount() {
-		this.arrays = new AtomicIntegerArray(LENGTH);
-		reset(0);
+		super(LENGTH);
 	}
 
 	public void reset(long time) {
 		this.startTime = time;
 		for (int i = 0; i < LENGTH; ++i)
-			arrays.set(i, 0);
+			set(i, 0);
 	}
 
 	public void finish(long time) {
 		this.endTime = time;
 	}
 
-	public int inc(long takeTime) {
-		int sum = arrays.incrementAndGet(0);
+	public void takeCount(long takeTime) {
+		incrementAndGet(0);
 		int i = 1;
 		takeTime >>>= SHIFT;
 		while (takeTime > 0) {
@@ -36,22 +36,17 @@ public class MethodCount {
 			takeTime >>= 1;
 		}
 		if (i < LENGTH)
-			arrays.incrementAndGet(i);
+			incrementAndGet(i);
 		else
-			arrays.incrementAndGet(LENGTH - 1);
-		return sum;
-
+			incrementAndGet(LENGTH - 1);
 	}
 
 	public int getCount() {
-		return arrays.get(0);
+		return get(0);
 	}
 
-	/**
-	 * count,64ms,128ms,256ms,512ms,1024ms,2048ms,4096ms,8192ms,16384ms,more
-	 */
 	public int getCount(int idx) {
-		return arrays.get(idx);
+		return get(idx);
 	}
 
 }

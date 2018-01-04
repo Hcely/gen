@@ -43,8 +43,12 @@ public class MethodFilterSet {
 		return logger;
 	}
 
-	public void count(long takeTime) {
-		counter.inc(takeTime);
+	public final long inc() {
+		return counter.inc();
+	}
+
+	public final void takeCount(long takeTime) {
+		counter.takeCount(takeTime);
 	}
 
 	public MethodCount swap() {

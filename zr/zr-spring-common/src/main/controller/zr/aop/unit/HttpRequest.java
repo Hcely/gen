@@ -50,6 +50,7 @@ public class HttpRequest {
 	public static final int REQUEST_JSON = 2;
 	public static final int REQUEST_MULTIPART = 3;
 
+	private long requestNum;
 	private int contentType;
 	private String remoteIp;
 	private HttpServletRequest request;
@@ -69,6 +70,7 @@ public class HttpRequest {
 
 	private final HttpRequest set(HttpServletRequest request, MethodFilterSet filterSet) {
 		checkClear();
+		this.requestNum = filterSet.inc();
 		this.request = request;
 		this.remoteIp = SpringUtil.getRemoteIp(request);
 		this.filterSet = filterSet;
@@ -106,7 +108,7 @@ public class HttpRequest {
 	private final void finish(HResult hr) {
 		this.takeTime = System.currentTimeMillis() - requestTime;
 		this.hr = hr;
-		filterSet.count(takeTime);
+		filterSet.takeCount(takeTime);
 	}
 
 	private final void checkClear() {
@@ -115,6 +117,7 @@ public class HttpRequest {
 	}
 
 	private final void clear() {
+		this.requestNum = 0;
 		this.contentType = 0;
 		this.request = null;
 		this.remoteIp = null;
@@ -125,6 +128,10 @@ public class HttpRequest {
 		this.emptyCookies = true;
 		this.cookieMap.clear();
 		this.hr = null;
+	}
+
+	public long getRequestNum() {
+		return requestNum;
 	}
 
 	public HttpServletRequest getRequest() {
