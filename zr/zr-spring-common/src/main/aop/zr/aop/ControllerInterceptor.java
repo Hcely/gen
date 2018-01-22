@@ -59,6 +59,7 @@ import zr.aop.unit.FilterInfo;
 import zr.aop.unit.HttpRequest;
 import zr.aop.unit.MethodFilterSet;
 import zr.unit.HRException;
+import zr.unit.HRStatusException;
 import zr.unit.HResult;
 import zr.util.ClassUtil;
 import zr.util.SpringUtil;
@@ -214,7 +215,7 @@ public class ControllerInterceptor
 			try {
 				FilterInfo info = filters[i++];
 				hr = info.getFilter().before(req, info);
-			} catch (HRException e) {
+			} catch (HRStatusException e) {
 				hr = e.hr();
 			} catch (Throwable e) {
 				hr = new HResult(e);
@@ -229,6 +230,7 @@ public class ControllerInterceptor
 			} catch (Throwable e) {
 				hr = new HResult(e);
 			}
+		Util.setResponse(req, hr);
 		while (i > 0)
 			try {
 				FilterInfo info = filters[--i];
@@ -236,7 +238,7 @@ public class ControllerInterceptor
 			} catch (Throwable e) {
 				AppContext.logger.error(e, e);
 			}
-		Util.finishRequest(req, hr);
+		Util.finishRequest(req);
 		return hr;
 	}
 
@@ -286,8 +288,8 @@ public class ControllerInterceptor
 	public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler,
 			Exception ex) {
 		HResult hr = null;
-		if (ex.getClass() == HRException.class)
-			hr = ((HRException) ex).hr();
+		if (ex.getClass() == HRStatusException.class)
+			hr = ((HRStatusException) ex).getStatus().toHR();
 		else
 			hr = handleOtherError(request, ex);
 		if (hr == null)

@@ -2,45 +2,38 @@ package zr.unit;
 
 import v.common.util.LinkedQueueMap;
 
-public final class HResult extends LinkedQueueMap<String, Object> {
-	public static final int CODE_SUCCESS = 200;
-	public static final int CODE_SERVER_ERROR = 500;
-	public static final HResult HR_200 = new HResult();
-
+public class HResult extends LinkedQueueMap<String, Object> {
 	public static final String KEY_CODE = "code";
 	public static final String KEY_MSG = "msg";
+	public static final String KEY_DATA = "data";
 
-	private Throwable error = null;
 	private int code = 0;
 	private String msg = null;
 
 	public HResult() {
-		this(CODE_SUCCESS, "ok", null);
+		this(HRStatus.OK);
 	}
 
-	public HResult(int code) {
-		this(code, null, null);
+	public HResult(HRStatus respCode) {
+		this(respCode.code, respCode.msg);
 	}
 
 	public HResult(int code, String msg) {
-		this(code, msg, null);
-	}
-
-	public HResult(int code, String msg, Throwable error) {
 		addParam(KEY_CODE, code);
 		addParam(KEY_MSG, msg);
 		this.code = code;
 		this.msg = msg;
-		this.error = error;
-	}
-
-	public HResult(Throwable error) {
-		this(CODE_SERVER_ERROR, "server error", error);
 	}
 
 	public HResult setCode(int code) {
 		this.code = code;
-		put(KEY_CODE, KEY_CODE);
+		put(KEY_CODE, code);
+		return this;
+	}
+
+	public HResult setStatus(HRStatus respCode) {
+		setCode(respCode.code);
+		setMsg(respCode.msg);
 		return this;
 	}
 
@@ -65,12 +58,12 @@ public final class HResult extends LinkedQueueMap<String, Object> {
 		return msg;
 	}
 
-	public Throwable error() {
-		return error;
+	public Object getData() {
+		return get(KEY_DATA);
 	}
 
-	public HResult error(Throwable error) {
-		this.error = error;
+	public HResult setData(Object data) {
+		put(KEY_DATA, data);
 		return this;
 	}
 
@@ -78,6 +71,15 @@ public final class HResult extends LinkedQueueMap<String, Object> {
 		if (value != null)
 			this.add(key, value);
 		return this;
+	}
+
+	public HRStatus toStatus() {
+		return new HRStatus(getCode(), getMsg());
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public <T> HRObj<T> toObj() {
+		return new HRObj(getCode(), getMsg(), getData());
 	}
 
 }

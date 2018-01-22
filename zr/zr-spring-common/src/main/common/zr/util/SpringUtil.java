@@ -2,9 +2,12 @@ package zr.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -18,6 +21,12 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.ClassUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -37,6 +46,122 @@ public class SpringUtil {
 		} catch (Throwable e) {
 			AppContext.logger.error("与客户端通讯异常", e);
 		}
+	}
+
+	public static final Set<String> getMethodUris(Method method) {
+		Set<String> classUris = getClassUris(method.getDeclaringClass());
+		Set<String> methodUris = getMethodUris0(method);
+		if (methodUris == null)
+			return null;
+		if (classUris == null)
+			return methodUris;
+		Set<String> uris = new LinkedHashSet<>();
+		for (String c : classUris) {
+			if (c.equals("/"))
+				c = null;
+			for (String m : methodUris) {
+				if (c == null)
+					uris.add(m);
+				else {
+					StringBuilder sb = new StringBuilder(c.length() + m.length());
+					sb.append(c).append(m);
+					uris.add(sb.toString());
+				}
+			}
+		}
+		return uris;
+	}
+
+	private static final Set<String> getClassUris(Class<?> clz) {
+		RequestMapping rm = clz.getAnnotation(RequestMapping.class);
+		if (rm == null)
+			return null;
+		return getUri(rm);
+	}
+
+	private static final Set<String> getMethodUris0(Method m) {
+		RequestMapping mapping = m.getAnnotation(RequestMapping.class);
+		if (mapping != null)
+			return getUri(mapping);
+		GetMapping get = m.getAnnotation(GetMapping.class);
+		if (get != null)
+			return getUri(get);
+		PostMapping post = m.getAnnotation(PostMapping.class);
+		if (post != null)
+			return getUri(post);
+		PutMapping put = m.getAnnotation(PutMapping.class);
+		if (put != null)
+			return getUri(put);
+		DeleteMapping delete = m.getAnnotation(DeleteMapping.class);
+		if (delete != null)
+			return getUri(delete);
+		PatchMapping patch = m.getAnnotation(PatchMapping.class);
+		if (patch != null)
+			return getUri(patch);
+		return null;
+	}
+
+	private static final Set<String> getUri(RequestMapping anno) {
+		String[] values = anno.value();
+		if (values.length == 0)
+			values = anno.path();
+		return getUris(values);
+	}
+
+	private static final Set<String> getUri(GetMapping anno) {
+		String[] values = anno.value();
+		if (values.length == 0)
+			values = anno.path();
+		return getUris(values);
+	}
+
+	private static final Set<String> getUri(PostMapping anno) {
+		String[] values = anno.value();
+		if (values.length == 0)
+			values = anno.path();
+		return getUris(values);
+	}
+
+	private static final Set<String> getUri(PutMapping anno) {
+		String[] values = anno.value();
+		if (values.length == 0)
+			values = anno.path();
+		return getUris(values);
+	}
+
+	private static final Set<String> getUri(DeleteMapping anno) {
+		String[] values = anno.value();
+		if (values.length == 0)
+			values = anno.path();
+		return getUris(values);
+	}
+
+	private static final Set<String> getUri(PatchMapping anno) {
+		String[] values = anno.value();
+		if (values.length == 0)
+			values = anno.path();
+		return getUris(values);
+	}
+
+	private static final Set<String> getUris(String[] values) {
+		Set<String> hr = new LinkedHashSet<>();
+		if (values.length == 0)
+			hr.add("/");
+		else
+			for (String e : values) {
+				e = getUri(e);
+				if (e != null)
+					hr.add(e);
+			}
+		return hr;
+	}
+
+	private static final String getUri(String name) {
+		if (name == null || name.isEmpty())
+			return "/";
+		if (name.charAt(0) != '/')
+			name = new StringBuilder(name.length() + 1).append('/').append(name).toString();
+		return name;
 	}
 
 	public static final HttpServletRequest getRequest() {

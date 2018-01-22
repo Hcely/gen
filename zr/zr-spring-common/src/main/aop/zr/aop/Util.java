@@ -33,8 +33,12 @@ class Util extends HttpRequest {
 		return HttpRequest.getResponseRequest(request, hr);
 	}
 
-	public static void finishRequest(HttpRequest req, HResult hr) {
-		HttpRequest.finishRequest(req, hr);
+	public static void setResponse(HttpRequest req, HResult hr) {
+		HttpRequest.setResponse(req, hr);
+	}
+
+	public static void finishRequest(HttpRequest req) {
+		HttpRequest.finishRequest(req);
 	}
 
 	public static void recycleRequest(HttpRequest req) {

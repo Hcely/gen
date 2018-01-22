@@ -8,19 +8,27 @@ import v.common.helper.StrUtil;
 import v.server.helper.NetUtil;
 
 public class StrIdUtil {
-	private static final char[] CHAR_64 = NumberHelper.CHAR_64;
 	private static final char[] CHARS = { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
 			'0' };
-	private static final int MACHINE_CODE = NetUtil.getMachineCode() & ((1 << 10) - 1);
-	private static final int MASK = (1 << 15) - 1;
+	private static final int WORKER_MASK = (1 << 10) - 1;
+	private static final int WORKER_ID = NetUtil.getMachineCode() & WORKER_MASK;
+	private static final int NUM_MASK = (1 << 15) - 1;
 	private static final Map<String, IdFactory> factoryMap = new HashMap<>();
 
-	public static final String getId(String idType) {
+	public static final String nextId(String idType) {
 		return getFactory(idType).nextId();
 	}
 
+	public static final String maxId(String idType, long time) {
+		return getFactory(idType).maxId(time);
+	}
+
+	public static final String mixId(String idType, long time) {
+		return getFactory(idType).minId(time);
+	}
+
 	public static final long getTime(String id) {
-		long time = NumberHelper.parse32Str(id, 2, 11);
+		long time = Long.parseLong(id.substring(2, 13), 32);
 		time >>>= 10;
 		return time;
 	}
@@ -72,34 +80,47 @@ public class StrIdUtil {
 					throw new RuntimeException(String.format(
 							"Clock moved backwards.  Refusing to generate id for %d milliseconds", lastTime - time));
 				else if (lastTime == time) {
-					num = (++incNum) & MASK;
+					num = (++incNum) & NUM_MASK;
 					if (num == 0)
 						time = nextTime(time);
 				} else
 					incNum = 0;
 				lastTime = time;
 			}
-			time <<= 10;
-			time |= MACHINE_CODE;
-			char[] ch = charArray.clone();
-			for (int i = 13; i > 2;) {
-				ch[--i] = CHAR_64[(int) (time & 31)];
-				time >>>= 5;
-			}
-			ch[13] = CHAR_64[(num >>> 10) & 31];
-			ch[14] = CHAR_64[(num >>> 5) & 31];
-			ch[15] = CHAR_64[num & 31];
-			return StrUtil.newStr(ch);
+			return getId(charArray, time, WORKER_ID, num);
 		}
 
-		private static final long nextTime(final long time) {
-			do {
-				long curTime = System.currentTimeMillis();
-				if (curTime > time)
-					return curTime;
-				Thread.yield();
-			} while (true);
+		public final String maxId(long time) {
+			return getId(charArray, time, WORKER_MASK, NUM_MASK);
 		}
+
+		public final String minId(long time) {
+			return getId(charArray, time, 0, 0);
+		}
+	}
+
+	private static final String getId(char[] charArray, long time, int machineCode, int num) {
+		time <<= 10;
+		time |= machineCode;
+		char[] ch = charArray.clone();
+		char[] char64 = NumberHelper.CHAR_64;
+		for (int i = 13; i > 2;) {
+			ch[--i] = char64[(int) (time & 31)];
+			time >>>= 5;
+		}
+		ch[13] = char64[(num >>> 10) & 31];
+		ch[14] = char64[(num >>> 5) & 31];
+		ch[15] = char64[num & 31];
+		return StrUtil.newStr(ch);
+	}
+
+	private static final long nextTime(final long time) {
+		do {
+			long curTime = System.currentTimeMillis();
+			if (curTime > time)
+				return curTime;
+			Thread.yield();
+		} while (true);
 	}
 
 }

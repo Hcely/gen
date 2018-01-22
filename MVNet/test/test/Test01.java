@@ -1,15 +1,14 @@
 package test;
 
-import gem.mv.DefMVFramewokerBuilder;
-import gem.mv.MVFramework;
-import gem.mv.plugin.zkcluster.ZKClusterConfigPlugin;
-import gem.mv.util.MVUtil;
+import java.util.stream.Stream;
 
 public class Test01 {
 
 	public static void main(String[] args) throws InterruptedException {
-		System.out.println(MVUtil.getRandomClientId());
-		System.out.println(MVUtil.getRandomServiceId());
+		String[] aaa=new String[100];
+		System.out.println(aaa.hashCode());
+		Stream<String> a=Stream.of(aaa);
+		System.out.println(a.toArray().hashCode());
 	}
 
 }

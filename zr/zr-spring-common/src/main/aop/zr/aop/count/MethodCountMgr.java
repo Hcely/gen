@@ -14,7 +14,7 @@ public class MethodCountMgr implements Destoryable {
 	protected final ConcurrentLinkedQueue<MethodFilterSet> filterSets;
 	protected final MethodCountHandler handler;
 	protected final List<MethodCountInfo> infos;
-	protected VThreadLoop loop;
+	protected final VThreadLoop loop;
 
 	public MethodCountMgr(MethodCountHandler handler) {
 		this.filterSets = new ConcurrentLinkedQueue<>();
@@ -28,8 +28,7 @@ public class MethodCountMgr implements Destoryable {
 
 	@Override
 	public void destory() {
-		if (loop != null)
-			loop.destory();
+		loop.destory();
 	}
 
 	public void addFilterSet(MethodFilterSet filterSet) {

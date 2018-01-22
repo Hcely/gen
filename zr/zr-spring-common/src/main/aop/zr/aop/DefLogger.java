@@ -23,12 +23,10 @@ final class DefLogger implements AopLogger {
 		request.parametersToStr(sb);
 
 		HResult hr = request.getHr();
-
 		if (AppContext.isDebug())
 			sb.append(" response:").append(JsonUtil.obj2JsonStr(hr));
 		else
 			sb.append(" response ").append(hr.getCode()).append('-').append(hr.getMsg());
-
 		if (hr.error() == null)
 			AppContext.logger.info(sb);
 		else

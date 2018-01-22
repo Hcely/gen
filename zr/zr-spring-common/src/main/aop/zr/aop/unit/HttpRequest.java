@@ -31,11 +31,15 @@ public class HttpRequest {
 	}
 
 	protected static HttpRequest getResponseRequest(HttpServletRequest request, HResult hr) {
-		return reqTL.get().set(request, hr);
+		return reqTL.get().setResponse(request, hr);
 	}
 
-	protected static void finishRequest(HttpRequest req, HResult hr) {
-		req.finish(hr);
+	protected static void setResponse(HttpRequest req, HResult hr) {
+		req.setResponse(hr);
+	}
+
+	protected static void finishRequest(HttpRequest req) {
+		req.finish();
 	}
 
 	protected static void recycleRequest(HttpRequest req) {
@@ -86,7 +90,7 @@ public class HttpRequest {
 		return this;
 	}
 
-	private final HttpRequest set(HttpServletRequest request, HResult hr) {
+	private final HttpRequest setResponse(HttpServletRequest request, HResult hr) {
 		checkClear();
 		this.request = request;
 		this.remoteIp = SpringUtil.getRemoteIp(request);
@@ -105,9 +109,12 @@ public class HttpRequest {
 		return this;
 	}
 
-	private final void finish(HResult hr) {
-		this.takeTime = System.currentTimeMillis() - requestTime;
+	private final void setResponse(HResult hr) {
 		this.hr = hr;
+	}
+
+	private final void finish() {
+		this.takeTime = System.currentTimeMillis() - requestTime;
 		filterSet.takeCount(takeTime);
 	}
 
