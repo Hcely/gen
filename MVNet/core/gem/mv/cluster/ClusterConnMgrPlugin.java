@@ -1,5 +1,6 @@
 package gem.mv.cluster;
 
+import java.io.IOException;
 import java.util.List;
 
 import gem.mv.MVFramework;
@@ -8,7 +9,8 @@ import gem.mv.MVPlugin;
 import gem.mv.bean.ClusterAuthInfo;
 import gem.mv.util.IpRule;
 import gem.mv.util.MVUtil;
-import v.binary3.Binary3CoderMgr;
+import v.binary4.core.Binary4Builder;
+import v.binary4.core.Binary4Mapper;
 import v.common.util.IntHashMap;
 import v.common.util.SimpleQueue;
 import v.server.helper.NetUtil;
@@ -39,7 +41,7 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 	protected final IntHashMap<Wession> sessionMap;
 	protected volatile Wession[] servers;
 	protected volatile Wession[] clients;
-	protected final Binary3CoderMgr coderMgr;
+	protected final Binary4Mapper binaryMapper;
 	protected final SimpleQueue<ClusterMsgHandler> handlers;
 	protected final int serverId;
 	protected MVFrameworkContext context;
@@ -59,7 +61,7 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 	protected ClusterConnMgrPlugin(int serverId) {
 		this.serverId = serverId;
 		this.sessionMap = new IntHashMap<>();
-		this.coderMgr = new Binary3CoderMgr();
+		this.binaryMapper = new Binary4Builder().build();
 		this.handlers = new SimpleQueue<>();
 	}
 
@@ -228,15 +230,23 @@ public abstract class ClusterConnMgrPlugin implements MVPlugin {
 		RefBuf buf = session.allocate(1024);
 		buf.writeInt(targetServerId);
 		buf.writeInt(serverId);
-		coderMgr.encode(obj, buf);
-		session.sendBinary(buf);
+		try {
+			binaryMapper.encode(buf, obj);
+			session.sendBinary(buf);
+		} catch (IOException e) {
+		}
 		buf.release();
 	}
 
 	final void handleMsgBuf(RefBuf buf) {
 		int fromServerId = buf.readInt();
-		Object obj = coderMgr.decode(buf);
-		handleMsg(fromServerId, obj);
+		Object obj;
+		try {
+			obj = binaryMapper.decode(buf);
+			handleMsg(fromServerId, obj);
+		} catch (IOException e) {
+		}
+
 	}
 
 	final void handleMsg(int fromServerId, Object obj) {

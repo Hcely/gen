@@ -128,13 +128,13 @@ final class DefMVFramework extends VSimpleStatusObject implements MVFramework, M
 			return nullback;
 		if (Collection.class.isAssignableFrom(clazz)) {
 			Collection<String> hr;
-			if (clazz.isInterface() || ReflectUtil.isAbstract(clazz)) {
+			if (clazz.isInterface() || ReflectUtil.clazz.isAbstract(clazz)) {
 				if (Set.class.isAssignableFrom(clazz))
 					hr = new HashSet<>();
 				else
 					hr = new LinkedList<>();
 			} else
-				hr = (Collection<String>) ReflectUtil.newObj(clazz);
+				hr = (Collection<String>) ReflectUtil.clazz.newObj(clazz);
 
 			hr.addAll(StrUtil.spiltAsList(value, ','));
 			return (T) hr;

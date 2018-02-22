@@ -69,6 +69,12 @@ public class HeaderJacksonMessageConverter extends MappingJackson2HttpMessageCon
 	}
 
 	@Override
+	public boolean canWrite(Class<?> clazz, MediaType mediaType) {
+		// TODO Auto-generated method stub
+		return super.canWrite(clazz, mediaType);
+	}
+
+	@Override
 	protected void addDefaultHeaders(HttpHeaders headers, Object t, MediaType contentType) throws IOException {
 		super.addDefaultHeaders(headers, t, contentType);
 		for (KeyValue<String, String> e : responseHeaders)

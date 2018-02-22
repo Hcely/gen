@@ -20,8 +20,8 @@ import v.common.helper.ReflectUtil;
 import v.plugin.annotation.VPluginBean;
 import v.resource.HatchFactoryResourceMgr;
 import v.resource.annotation.VResource;
-import v.server.helper.ClassHelper;
-import v.server.helper.ClassHelper.ClassResource;
+import v.server.unit.ClassScaner;
+import v.server.unit.ClassScaner.ClassResource;
 import w.handler.WeaveErrorHandler;
 
 public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
@@ -42,7 +42,7 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 	@Override
 	public void addPlugin(Class<? extends MVPlugin> pluginClz) {
 		if (!pluginMap.containsKey(pluginClz))
-			pluginMap.put(pluginClz, ReflectUtil.newObj(pluginClz));
+			pluginMap.put(pluginClz, ReflectUtil.clazz.newObj(pluginClz));
 	}
 
 	@Override
@@ -70,16 +70,16 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 		Set<String> clzes = new LinkedHashSet<>();
 		for (String loc : classPaths) {
 			try {
-				List<String> list = ClassHelper.scanClasses(clz, loc);
+				List<String> list = ClassScaner.scanClasses(clz, loc);
 				clzes.addAll(list);
 			} catch (IOException e) {
 			}
 		}
 		for (String s : clzes) {
-			Class<?> c = ReflectUtil.getClassByName(s);
+			Class<?> c = ReflectUtil.clazz.getClassByName(s);
 			if (MVPlugin.class.isAssignableFrom(c)) {
 				if (c.getAnnotation(VPluginBean.class) != null)
-					addPlugin((MVPlugin) ReflectUtil.newObj(c));
+					addPlugin((MVPlugin) ReflectUtil.clazz.newObj(c));
 			} else if (c.getAnnotation(VResource.class) != null)
 				resourceClzes.add(c);
 		}
@@ -140,7 +140,7 @@ public class DefMVFramewokerBuilder implements MVFrameworkBuilder {
 		for (String e : locations)
 			try {
 				if (e.startsWith("classpath")) {
-					List<ClassResource> resources = ClassHelper.scanResources(clz, e);
+					List<ClassResource> resources = ClassScaner.scanResources(clz, e);
 					for (ClassResource r : resources)
 						MVUtil.loadProperties(r.getIn(), properties);
 				} else {
